@@ -29,7 +29,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "com.ricochet.dev",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -55,11 +55,11 @@
     },
     "windows": [
       {
-        "fullscreen": true,
-        "height": 600,
+        "fullscreen": false,
+        "height": 900,
         "resizable": false,
         "title": "ricochet",
-        "width": 800
+        "width": 1200
       }
     ]
   }
