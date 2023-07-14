@@ -5,6 +5,6 @@
 
 <body class="dark:bg-gray-800 w-screen h-screen">
   <DarkMode />
-  <h1 class="text-white">test</h1>
+  <h1 class="text-white">lmao</h1>
   <slot />
 </body>
