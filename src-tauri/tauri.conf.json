@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "ricochet",
-    "version": "0.1.0"
+    "version": "0.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -64,7 +64,7 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 900,
+        "height": 720,
         "resizable": false,
         "title": "ricochet",
         "width": 1200
