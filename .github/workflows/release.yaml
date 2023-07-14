@@ -38,6 +38,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          TAURI_PUBLIC_KEY: ${{ secrets.TAURI_PUBLIC_KEY }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
         with:
           tagName: app-v__VERSION__
           releaseName: "App v__VERSION__"

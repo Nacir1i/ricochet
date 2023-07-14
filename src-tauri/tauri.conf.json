@@ -51,7 +51,15 @@
       "csp": null
     },
     "updater": {
-      "active": false
+      "active": true,
+      "endpoints": [
+        "https://gist.githubusercontent.com/Nacir1i/f8c4441da85d6b8ef8ff51c1e4b2e051/raw"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM2NTZGNzgyMDZEOTE5NUEKUldSYUdka0dndmRXTm94d21hdjc1WVNwYUdDMDQ5ZHEzUnB0bk52UGNJVXptV01SVXpnMDZRWWoK",
+      "windows": {
+        "installMode": "passive"
+      }
     },
     "windows": [
       {
