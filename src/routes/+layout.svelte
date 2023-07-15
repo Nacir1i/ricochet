@@ -1,23 +1,39 @@
 <script lang="ts">
   import "../app.postcss";
   import {
-    DarkMode,
     Sidebar,
     SidebarGroup,
     SidebarItem,
     SidebarWrapper,
-    SidebarDropdownItem,
-    SidebarDropdownWrapper,
+    SidebarCta,
+    SidebarBrand,
+    DarkMode,
   } from "flowbite-svelte";
+  import logo from "$lib/asset/dev_logo.jpg";
+  import { page } from "$app/stores";
 
   let spanClass = "flex-1 ml-3 whitespace-nowrap";
+  let site = {
+    name: "Ricochet",
+    href: "/",
+    img: logo,
+  };
+
+  $: activeUrl = $page.url.pathname;
 </script>
 
-<body class="dark:bg-gray-800 w-screen h-screen">
-  <Sidebar>
-    <SidebarWrapper>
+<body class="dark:bg-gray-600 light:bg-gray-200 w-screen h-screen">
+  <Sidebar asideClass="w-64 h-full">
+    <SidebarWrapper
+      class="flex flex-col justify-between"
+      divClass="h-full overflow-y-auto py-4 px-3 bg-gray-50 dark:bg-gray-800"
+    >
       <SidebarGroup>
-        <SidebarItem label="Dashboard">
+        <SidebarBrand class="my-5" {site} />
+        <SidebarItem
+          label="Dashboard"
+          active={activeUrl === ("/" || "/dashboard")}
+        >
           <svelte:fragment slot="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -38,64 +54,19 @@
             >
           </svelte:fragment>
         </SidebarItem>
-        <SidebarDropdownWrapper label="E-commerce">
+        <SidebarItem label="History" {spanClass}>
           <svelte:fragment slot="icon">
             <svg
+              class="w-6 h-6 text-gray-800 dark:text-white"
+              aria-hidden="true"
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
-              /></svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
             >
-          </svelte:fragment>
-          <SidebarDropdownItem label="Products" />
-          <SidebarDropdownItem label="Billing" />
-          <SidebarDropdownItem label="Invoice" />
-        </SidebarDropdownWrapper>
-        <SidebarItem label="Kanban" {spanClass}>
-          <svelte:fragment slot="icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-              /></svg
-            >
-          </svelte:fragment>
-          <svelte:fragment slot="subtext">
-            <span
-              class="inline-flex justify-center items-center px-2 ml-3 text-sm font-medium text-gray-800 bg-gray-200 rounded-full dark:bg-gray-700 dark:text-gray-300"
-              >Pro</span
-            >
-          </svelte:fragment>
-        </SidebarItem>
-        <SidebarItem label="Inbox" {spanClass}>
-          <svelte:fragment slot="icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M12 3v8.25m0 0l-3-3m3 3l3-3"
-              /></svg
-            >
+              <path
+                d="m7.164 3.805-4.475.38L.327 6.546a1.114 1.114 0 0 0 .63 1.89l3.2.375 3.007-5.006ZM11.092 15.9l.472 3.14a1.114 1.114 0 0 0 1.89.63l2.36-2.362.38-4.475-5.102 3.067Zm8.617-14.283A1.613 1.613 0 0 0 18.383.291c-1.913-.33-5.811-.736-7.556 1.01-1.98 1.98-6.172 9.491-7.477 11.869a1.1 1.1 0 0 0 .193 1.316l.986.985.985.986a1.1 1.1 0 0 0 1.316.193c2.378-1.3 9.889-5.5 11.869-7.477 1.746-1.745 1.34-5.643 1.01-7.556Zm-3.873 6.268a2.63 2.63 0 1 1-3.72-3.72 2.63 2.63 0 0 1 3.72 3.72Z"
+              />
+            </svg>
           </svelte:fragment>
           <svelte:fragment slot="subtext">
             <span
@@ -104,7 +75,26 @@
             >
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem label="Users">
+        <SidebarItem label="Stats" {spanClass}>
+          <svelte:fragment slot="icon">
+            <svg
+              class="w-6 h-6 text-gray-800 dark:text-white"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 17 18"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M1 12v5m5-9v9m5-5v5m5-9v9M1 7l5-6 5 6 5-6"
+              />
+            </svg>
+          </svelte:fragment>
+        </SidebarItem>
+        <SidebarItem label="Profile">
           <svelte:fragment slot="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -121,24 +111,9 @@
             >
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem label="Sign In">
-          <svelte:fragment slot="icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-              /></svg
-            >
-          </svelte:fragment>
-        </SidebarItem>
-        <SidebarItem label="Sign Up">
+      </SidebarGroup>
+      <SidebarGroup>
+        <SidebarItem label="Settings">
           <svelte:fragment slot="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -155,11 +130,17 @@
             >
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem label="Toggle theme">
+        <SidebarItem label="Theme">
           <svelte:fragment slot="icon">
-            <DarkMode />
+            <DarkMode btnClass="p-1" />
           </svelte:fragment>
         </SidebarItem>
+        <SidebarCta label="Beta">
+          <svelte:fragment slot="icon" />
+          <p class="mb-3 text-sm text-primary-900 dark:text-primary-400">
+            This app is still in production, with many more features to come
+          </p>
+        </SidebarCta>
       </SidebarGroup>
     </SidebarWrapper>
   </Sidebar>
