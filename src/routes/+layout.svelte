@@ -22,7 +22,7 @@
   $: activeUrl = $page.url.pathname;
 </script>
 
-<body class="dark:bg-gray-600 light:bg-gray-200 w-screen h-screen">
+<body class="dark:bg-gray-600 light:bg-gray-200 w-screen h-screen flex">
   <Sidebar asideClass="w-64 h-full">
     <SidebarWrapper
       class="flex flex-col justify-between"
@@ -33,6 +33,7 @@
         <SidebarItem
           label="Dashboard"
           active={activeUrl === ("/" || "/dashboard")}
+          href="/"
         >
           <svelte:fragment slot="icon">
             <svg
@@ -54,7 +55,12 @@
             >
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem label="History" {spanClass}>
+        <SidebarItem
+          label="History"
+          active={activeUrl === "/history"}
+          href="/history"
+          {spanClass}
+        >
           <svelte:fragment slot="icon">
             <svg
               class="w-6 h-6 text-gray-800 dark:text-white"
@@ -75,7 +81,11 @@
             >
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem label="Stats" {spanClass}>
+        <SidebarItem
+          label="Stats"
+          active={activeUrl === "/stats"}
+          href="/stats"
+        >
           <svelte:fragment slot="icon">
             <svg
               class="w-6 h-6 text-gray-800 dark:text-white"
@@ -94,7 +104,11 @@
             </svg>
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem label="Profile">
+        <SidebarItem
+          label="Profile"
+          active={activeUrl === "/profile"}
+          href="profile"
+        >
           <svelte:fragment slot="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -113,7 +127,11 @@
         </SidebarItem>
       </SidebarGroup>
       <SidebarGroup>
-        <SidebarItem label="Settings">
+        <SidebarItem
+          label="Settings"
+          active={activeUrl === "/setting"}
+          href="setting"
+        >
           <svelte:fragment slot="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"

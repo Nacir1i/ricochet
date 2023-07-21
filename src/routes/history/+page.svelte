@@ -3,7 +3,7 @@
 </script>
 
 <div>
-  <h1>Dashboard</h1>
+  <h1>History</h1>
   <p>{count}</p>
   <button on:click={() => count++}>click</button>
 </div>
