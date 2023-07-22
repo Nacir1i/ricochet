@@ -65,7 +65,7 @@ struct Stats {
     shots: u16,
     hits: u16,
     damage_done: f32,
-    damage_taken: f32,
+    damage_possible: f32,
 }
 
 fn read_file(
@@ -74,6 +74,7 @@ fn read_file(
     let mut tile_record_list: Vec<String> = Vec::new();
     let mut key_value_record_list: Vec<String> = Vec::new();
     let mut stats_record_list: Vec<String> = Vec::new();
+    let validation_vec = vec!["Kills:", "Score:", "Hash:", "Deaths:", "Scenario:"];
 
     let mut rdr = csv::ReaderBuilder::new()
         .has_headers(true)
@@ -87,7 +88,7 @@ fn read_file(
             let tile_record: TilesRecords = record.deserialize(None)?;
             let tile_record_serialized = serde_json::to_string(&tile_record).unwrap();
             tile_record_list.push(tile_record_serialized);
-        } else if record.len() == 2 {
+        } else if record.len() == 2 && validation_vec.contains(&&record[0]) {
             let key_value_record: KeyValueRecord = record.deserialize(None)?;
             let key_vale_serialized = serde_json::to_string(&key_value_record).unwrap();
             key_value_record_list.push(key_vale_serialized);
