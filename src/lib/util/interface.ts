@@ -28,7 +28,7 @@ export interface Stats {
 export interface Game {
   tiles: [] | Tiles[];
   key_value: [] | KeyValue[];
-  stats: [] | Stats[];
+  stats: Stats;
 }
 
 export interface Payload {

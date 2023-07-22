@@ -1,9 +1,13 @@
 <script lang="ts">
-  let count = 1;
+  import { history } from "$lib";
 </script>
 
 <div>
-  <h1>History</h1>
-  <p>{count}</p>
-  <button on:click={() => count++}>click</button>
+  {#each $history as game}
+    <ul>
+      {#each game.key_value as { key, value }}
+        <li>{key} {value}</li>
+      {/each}
+    </ul>
+  {/each}
 </div>

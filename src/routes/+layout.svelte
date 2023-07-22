@@ -11,6 +11,10 @@
   } from "flowbite-svelte";
   import logo from "$lib/asset/dev_logo.jpg";
   import { page } from "$app/stores";
+  import { invoke } from "@tauri-apps/api/tauri";
+  import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+  import type { Tiles, KeyValue, Stats, Payload, Data, Game } from "$lib/util";
+  import { update_history } from "$lib";
 
   let spanClass = "flex-1 ml-3 whitespace-nowrap";
   let site = {
@@ -19,6 +23,38 @@
     img: logo,
   };
 
+  let listener: UnlistenFn;
+
+  async function eventListener() {
+    listener = await listen("event-name", (event) => {
+      let tiles: Tiles[] | [] = [];
+      let key_value: KeyValue[] | [] = [];
+
+      const payload = event.payload as Payload;
+
+      const data = JSON.parse(payload.data) as Data;
+
+      try {
+        for (let i = 0; i < data.tiles.length; i++) {
+          tiles = [...tiles, JSON.parse(data.tiles[i])];
+        }
+        for (let i = 0; i < data.key_value.length; i++) {
+          key_value = [...key_value, JSON.parse(data.key_value[i])];
+        }
+
+        let stats: Stats = JSON.parse(data.stats);
+
+        update_history({ tiles, key_value, stats });
+        console.log({ tiles, key_value, stats });
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    invoke("read_existing_files");
+  }
+
+  eventListener();
   $: activeUrl = $page.url.pathname;
 </script>
 
