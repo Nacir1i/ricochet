@@ -14,7 +14,8 @@
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
   import type { Tiles, KeyValue, Stats, Payload, Data, Game } from "$lib/util";
-  import { update_history } from "$lib";
+  import { update_history, history } from "$lib";
+  import Titlebar from "$lib/titlebar.svelte";
 
   let spanClass = "flex-1 ml-3 whitespace-nowrap";
   let site = {
@@ -58,10 +59,11 @@
   $: activeUrl = $page.url.pathname;
 </script>
 
-<body class="dark:bg-gray-600 light:bg-gray-200 w-screen h-screen flex">
+<body class="pt-7 dark:bg-gray-600 light:bg-gray-200 w-screen h-screen flex">
+  <Titlebar />
   <Sidebar asideClass="w-64 h-full">
     <SidebarWrapper
-      class="flex flex-col justify-between"
+      class="flex flex-col justify-between bg-gray-100"
       divClass="h-full overflow-y-auto py-4 px-3 bg-gray-50 dark:bg-gray-800"
     >
       <SidebarGroup>
@@ -113,7 +115,7 @@
           <svelte:fragment slot="subtext">
             <span
               class="inline-flex justify-center items-center p-3 ml-3 w-3 h-3 text-sm font-medium text-primary-600 bg-primary-200 rounded-full dark:bg-primary-900 dark:text-primary-200"
-              >3</span
+              >{$history.length}</span
             >
           </svelte:fragment>
         </SidebarItem>
