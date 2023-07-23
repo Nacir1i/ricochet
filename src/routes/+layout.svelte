@@ -46,7 +46,6 @@
         let stats: Stats = JSON.parse(data.stats);
 
         update_history({ tiles, key_value, stats });
-        console.log({ tiles, key_value, stats });
       } catch (error) {
         console.error(error);
       }

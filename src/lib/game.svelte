@@ -1,11 +1,17 @@
+<script lang="ts">
+  import type { Game } from "./util";
+
+  export let game: Game;
+</script>
+
 <div
   class="w-[25rem] h-36 flex dark:bg-slate-600 bg-slate-400 flex-col justify-center items-center rounded-md text-black dark:text-white"
 >
   <div class="w-full p-1 flex flex-col justify-center items-center">
-    <h1>Scenario</h1>
+    <h1>{game.key_value[3].value}</h1>
     <span class="flex gap-2">
       <p class="text-green-700 dark:text-green-400">Score:</p>
-      <p>69420</p>
+      <p>{game.key_value[2].value}</p>
     </span>
   </div>
   <div
@@ -16,27 +22,27 @@
     >
       <li class="flex flex-wrap">
         <p>Kills:</p>
-        <p>100</p>
+        <p>{game.key_value[0].value}</p>
       </li>
       <li class="flex flex-wrap">
         <p>Accuracy:</p>
-        <p>102</p>
+        <p>{Math.floor((game.stats.hits / game.stats.shots) * 100)}%</p>
       </li>
       <li class="flex flex-wrap">
         <p>Shots taken:</p>
-        <p>101</p>
+        <p>{game.stats.shots}</p>
       </li>
       <li class="flex flex-wrap">
         <p>Shots hit:</p>
-        <p>103</p>
+        <p>{game.stats.hits}</p>
       </li>
       <li class="flex flex-wrap">
         <p>Sens:</p>
-        <p>104</p>
+        <p>XX</p>
       </li>
       <li class="flex flex-wrap">
         <p>FOV:</p>
-        <p>105</p>
+        <p>XXX</p>
       </li>
     </ul>
   </div>
