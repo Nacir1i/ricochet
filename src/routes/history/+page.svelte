@@ -1,14 +1,10 @@
 <script lang="ts">
   import { history } from "$lib";
+  import Game from "$lib/game.svelte";
 </script>
 
-<div>
-  {#each $history as game}
-    <h1>{game.stats.weapon}</h1>
-    <ul>
-      {#each game.key_value as { key, value }}
-        <li>{key} {value}</li>
-      {/each}
-    </ul>
+<div class="w-full h-full p-3 flex flex-wrap gap-3 content-start">
+  {#each [1, 2, 3, 4] as game}
+    <Game />
   {/each}
 </div>

@@ -59,9 +59,9 @@
   $: activeUrl = $page.url.pathname;
 </script>
 
-<body class="pt-7 dark:bg-gray-600 light:bg-gray-200 w-screen h-screen flex">
+<body class="pt-7 dark:bg-gray-300 light:bg-gray-200 w-screen h-screen flex">
   <Titlebar />
-  <Sidebar asideClass="w-64 h-full">
+  <Sidebar class=" min-w-[16rem]">
     <SidebarWrapper
       class="flex flex-col justify-between bg-gray-100"
       divClass="h-full overflow-y-auto py-4 px-3 bg-gray-50 dark:bg-gray-800"
