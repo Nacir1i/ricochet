@@ -1,9 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+use diesel::prelude::*;
+use std::env;
 use std::str;
 use tauri::{Manager, Window};
 
 mod file_reader;
 mod file_watcher;
+mod models;
+mod schema;
 
 // const DIRECTORY_PATH: &str = "C:/Users/LolRandomXD/Desktop/dev/rustTest/csv/test";
 const DIRECTORY_PATH: &str = "C:/Users/LolRandomXD/Desktop/KovaaKs.FPS.Aim.Trainer/KovaaKs.FPS.Aim.Trainer/FPSAimTrainer/stats";
@@ -26,6 +30,14 @@ impl FileData {
 struct Payload {
     message: String,
     data: file_reader::Data,
+}
+
+pub fn establish_connection() -> SqliteConnection {
+    dotenvy::dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    SqliteConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
 fn emit_tauri_event(window: &Window, data: file_reader::Data) {

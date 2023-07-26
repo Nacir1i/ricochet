@@ -17,7 +17,19 @@ tauri-build = { version = "1.4.0", features = [] }
 [dependencies]
 serde_json = "1.0.103"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.4.0", features = [ "window-show", "window-minimize", "window-hide", "window-unminimize", "window-maximize", "window-unmaximize", "window-start-dragging", "window-close", "updater"] }
+tauri = { version = "1.4.0", features = [
+    "window-show",
+    "window-minimize",
+    "window-hide",
+    "window-unminimize",
+    "window-maximize",
+    "window-unmaximize",
+    "window-start-dragging",
+    "window-close",
+    "updater",
+] }
+diesel = { version = "2.1.0", features = ["sqlite"] }
+dotenvy = "0.15"
 csv = "1.1"
 notify = "6.0.1"
 
