@@ -5,7 +5,7 @@
 </script>
 
 <div
-  class="w-[25rem] h-36 flex dark:bg-slate-600 bg-slate-400 flex-col justify-center items-center rounded-md text-black dark:text-white"
+  class="w-[24rem] h-36 flex dark:bg-slate-600 bg-slate-400 flex-col justify-center items-center rounded-md text-black dark:text-white"
 >
   <div class="w-full p-1 flex flex-col justify-center items-center">
     <h1>{game.key_value[3].value}</h1>
@@ -38,11 +38,11 @@
       </li>
       <li class="flex flex-wrap">
         <p>Sens:</p>
-        <p>XX</p>
+        <p>{game.key_value[5].value}</p>
       </li>
       <li class="flex flex-wrap">
         <p>FOV:</p>
-        <p>XXX</p>
+        <p>{game.key_value[6].value}</p>
       </li>
     </ul>
   </div>
