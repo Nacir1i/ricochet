@@ -14,7 +14,7 @@
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
   import type { Tiles, KeyValue, Stats, Payload, Data, Game } from "$lib/util";
-  import { update_history, history } from "$lib";
+  import { set_history, update_history, history } from "$lib";
   import Titlebar from "$lib/titlebar.svelte";
 
   let spanClass = "flex-1 ml-3 whitespace-nowrap";
@@ -50,11 +50,21 @@
         console.error(error);
       }
     });
+  }
 
-    invoke("read_existing_files");
+  async function fetch_data() {
+    try {
+      const data = await invoke<Game[]>("fetch_data", { page: 1, limit: 52 });
+
+      set_history(data);
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   eventListener();
+  fetch_data();
   $: activeUrl = $page.url.pathname;
 </script>
 
