@@ -29,8 +29,6 @@ pub fn file_watcher_thread(window: &Window) {
             match event {
                 Ok(event) => match event.kind {
                     EventKind::Create(CreateKind::Any) => {
-                        println!("{:?}", event.kind);
-
                         match read_file(&event.paths.as_slice()[0]) {
                             Ok((tiles, key_value, stats)) => {
                                 let data = Data {

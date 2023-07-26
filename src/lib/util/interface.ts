@@ -33,7 +33,7 @@ export interface Game {
 
 export interface Payload {
   message: string;
-  data: string;
+  data: Game;
 }
 
 export interface Data {

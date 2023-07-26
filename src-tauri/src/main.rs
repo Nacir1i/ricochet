@@ -25,18 +25,16 @@ impl FileData {
 #[derive(Clone, serde::Serialize)]
 struct Payload {
     message: String,
-    data: String,
+    data: file_reader::Data,
 }
 
 fn emit_tauri_event(window: &Window, data: file_reader::Data) {
-    let string_data = serde_json::to_string(&data).unwrap();
-
     window
         .emit(
             "event-name",
             Payload {
                 message: "event sent".to_owned(),
-                data: string_data,
+                data,
             },
         )
         .unwrap()
