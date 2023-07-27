@@ -1,13 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use diesel::prelude::*;
-use std::env;
-use std::str;
-use tauri::{Manager, Window};
 
+mod database;
 mod file_reader;
 mod file_watcher;
-mod models;
-mod schema;
+mod state;
+
+use state::{AppState, ServiceAccess};
+use std::env;
+use std::str;
+use tauri::{AppHandle, Manager, State, Window};
 
 // const DIRECTORY_PATH: &str = "C:/Users/LolRandomXD/Desktop/dev/rustTest/csv/test";
 const DIRECTORY_PATH: &str = "C:/Users/LolRandomXD/Desktop/KovaaKs.FPS.Aim.Trainer/KovaaKs.FPS.Aim.Trainer/FPSAimTrainer/stats";
@@ -30,14 +31,6 @@ impl FileData {
 struct Payload {
     message: String,
     data: file_reader::Data,
-}
-
-pub fn establish_connection() -> SqliteConnection {
-    dotenvy::dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    SqliteConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
 fn emit_tauri_event(window: &Window, data: file_reader::Data) {
@@ -79,6 +72,17 @@ fn fetch_data(
     return Some(data);
 }
 
+#[tauri::command]
+fn greet(app_handle: AppHandle, name: &str) -> String {
+    app_handle.db(|db| database::add_item(name, db)).unwrap();
+
+    let items = app_handle.db(|db| database::get_all(db)).unwrap();
+
+    let items_string = items.join(" | ");
+
+    format!("Your name log: {}", items_string)
+}
+
 fn main() {
     let mut file_data = FileData::new();
 
@@ -89,13 +93,23 @@ fn main() {
 
     tauri::Builder::default()
         .setup(|app| {
+            let handle = app.handle();
+
+            let app_state: State<AppState> = handle.state();
+            let db =
+                database::initialize_database(&handle).expect("Database initialize should succeed");
+            *app_state.db.lock().unwrap() = Some(db);
+
             Ok({
                 let main_window = app.get_window("main").unwrap();
                 file_watcher::file_watcher_thread(&main_window);
             })
         })
+        .manage(AppState {
+            db: Default::default(),
+        })
         .manage(file_data)
-        .invoke_handler(tauri::generate_handler![fetch_data])
+        .invoke_handler(tauri::generate_handler![fetch_data, greet])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
