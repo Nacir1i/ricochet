@@ -1,5 +1,9 @@
 use notify::{event::CreateKind, *};
-use std::{path::Path, time::Duration};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 use tauri::Window;
 
 use crate::{
@@ -28,7 +32,10 @@ pub fn file_watcher_thread(window: &Window) {
         for event in rx {
             match event {
                 Ok(event) => match event.kind {
-                    EventKind::Create(CreateKind::Any) => {
+                    notify::event::EventKind::Create(CreateKind::File) => {
+                        if !is_csv_file(&event.paths.as_slice()[0]) {
+                            continue;
+                        };
                         match read_file(&event.paths.as_slice()[0]) {
                             Ok((tiles, key_value, stats)) => {
                                 let data = Data {
@@ -51,4 +58,13 @@ pub fn file_watcher_thread(window: &Window) {
             }
         }
     });
+}
+
+fn is_csv_file(file_name: &PathBuf) -> bool {
+    let file_extension = Path::new(file_name).extension().and_then(OsStr::to_str);
+
+    if file_name.is_file() && file_extension == Some("csv") {
+        return true;
+    }
+    return false;
 }
