@@ -27,6 +27,14 @@
       "fs": {
         "readDir": true,
         "scope": ["C:/Program Files (x86)/Steam/steamapps/common/FPSAimTrainer/FPSAimTrainer/*"]
+      },
+      "dialog": {
+        "all": false,
+        "ask": false,
+        "confirm": false,
+        "message": false,
+        "open": true,
+        "save": false
       }
     },
     "bundle": {
