@@ -12,8 +12,8 @@
   import logo from "$lib/asset/dev_logo.jpg";
   import { page } from "$app/stores";
   import { invoke } from "@tauri-apps/api/tauri";
-  import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-  import type { Tiles, KeyValue, Stats, Payload, Data, Game } from "$lib/util";
+  import { listen } from "@tauri-apps/api/event";
+  import type { Payload, Game } from "$lib/util";
   import { set_history, update_history, history } from "$lib";
   import Titlebar from "$lib/titlebar.svelte";
 
@@ -25,7 +25,7 @@
   };
 
   async function eventListener() {
-    await listen("event-name", (event) => {
+    await listen("new_run", (event) => {
       const payload = event.payload as Payload;
 
       update_history(payload.data);
@@ -34,7 +34,7 @@
 
   async function fetch_data() {
     try {
-      const data = await invoke<Game[]>("fetch_data", { page: 1, limit: 2 });
+      const data = await invoke<Game[]>("fetch_data", { page: 1, limit: 10 });
 
       if (data) {
         set_history(data);

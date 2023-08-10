@@ -1,9 +1,18 @@
 <script lang="ts">
-  let count = 1;
+  import { open } from "@tauri-apps/api/dialog";
+  import { homeDir } from "@tauri-apps/api/path";
+
+  async function changeDirPath() {
+    const selectedPath = await open({
+      directory: true,
+      defaultPath: await homeDir(),
+    });
+
+    console.log("selectedPath", selectedPath);
+  }
 </script>
 
 <div>
   <h1>Settings</h1>
-  <p>{count}</p>
-  <button on:click={() => count++}>click</button>
+  <button on:click={changeDirPath}>click</button>
 </div>
