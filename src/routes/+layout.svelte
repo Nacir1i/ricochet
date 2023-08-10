@@ -24,10 +24,8 @@
     img: logo,
   };
 
-  let listener: UnlistenFn;
-
   async function eventListener() {
-    listener = await listen("event-name", (event) => {
+    await listen("event-name", (event) => {
       const payload = event.payload as Payload;
 
       update_history(payload.data);
@@ -38,8 +36,10 @@
     try {
       const data = await invoke<Game[]>("fetch_data", { page: 1, limit: 2 });
 
-      set_history(data);
-      console.log(data);
+      if (data) {
+        set_history(data);
+      }
+      console.log("data", data);
     } catch (error) {
       console.error(error);
     }
