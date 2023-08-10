@@ -11,7 +11,7 @@ use std::str;
 use tauri::{AppHandle, Manager, State, Window};
 
 // const DIRECTORY_PATH: &str = "C:/Users/LolRandomXD/Desktop/dev/rustTest/csv/test";
-const DIRECTORY_PATH: &str = "C:/Users/LolRandomXD/Desktop/KovaaKs.FPS.Aim.Trainer/KovaaKs.FPS.Aim.Trainer/FPSAimTrainer/stats";
+const DIRECTORY_PATH: &str = "/home/linuxlolrandomxd/Desktop/scenarios";
 
 #[derive(Debug)]
 pub struct FileData(std::sync::Mutex<Vec<file_reader::Data>>);
