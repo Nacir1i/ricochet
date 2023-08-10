@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-use tauri::Window;
 
 use crate::{
     emit_tauri_event,
@@ -12,11 +11,13 @@ use crate::{
     DIRECTORY_PATH,
 };
 
-pub fn file_watcher_thread(window: &Window) {
+pub fn file_watcher_thread() {
     let (tx, rx) = std::sync::mpsc::channel();
-    let main_window = window.clone();
 
     std::thread::spawn(move || {
+        let binding = "/home/linuxlolrandomxd/Desktop/scenarios".to_owned();
+        let dir_path = DIRECTORY_PATH.get().unwrap_or(&binding);
+
         let mut watcher: Box<dyn Watcher> =
             if RecommendedWatcher::kind() == WatcherKind::PollWatcher {
                 let config = Config::default().with_poll_interval(Duration::from_secs(1));
@@ -26,7 +27,7 @@ pub fn file_watcher_thread(window: &Window) {
             };
 
         watcher
-            .watch(Path::new(DIRECTORY_PATH), RecursiveMode::Recursive)
+            .watch(Path::new(dir_path), RecursiveMode::Recursive)
             .unwrap();
 
         for event in rx {
@@ -43,7 +44,7 @@ pub fn file_watcher_thread(window: &Window) {
                                     key_value,
                                     stats,
                                 };
-                                emit_tauri_event(&main_window, data);
+                                emit_tauri_event(data, &"new_run");
                             }
                             Err(err) => {
                                 eprintln!("Error reading file: {}", err);

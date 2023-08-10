@@ -105,7 +105,9 @@ pub fn read_file(
 }
 
 pub fn read_existing_files(file_data: &mut FileData) {
-    let dir_entries = std::fs::read_dir(DIRECTORY_PATH).unwrap();
+    let binding = "/home/linuxlolrandomxd/Desktop/scenarios".to_owned();
+    let dir_path = DIRECTORY_PATH.get().unwrap_or(&binding);
+    let dir_entries = std::fs::read_dir(dir_path).unwrap();
 
     for file in dir_entries {
         match file {

@@ -5,13 +5,13 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
-use state::{AppState, ServiceAccess};
+use state::AppState;
 use std::env;
-use std::str;
-use tauri::{AppHandle, Manager, State, Window};
+use std::sync::OnceLock;
+use tauri::{Manager, State, Window};
 
-// const DIRECTORY_PATH: &str = "C:/Users/LolRandomXD/Desktop/dev/rustTest/csv/test";
-const DIRECTORY_PATH: &str = "/home/linuxlolrandomxd/Desktop/scenarios";
+static DIRECTORY_PATH: OnceLock<String> = OnceLock::new();
+static WINDOW: OnceLock<Window> = OnceLock::new();
 
 #[derive(Debug)]
 pub struct FileData(std::sync::Mutex<Vec<file_reader::Data>>);
@@ -33,10 +33,12 @@ struct Payload {
     data: file_reader::Data,
 }
 
-fn emit_tauri_event(window: &Window, data: file_reader::Data) {
+fn emit_tauri_event(data: file_reader::Data, event: &str) {
+    let window = WINDOW.get().expect("Window is un available");
+
     window
         .emit(
-            "event-name",
+            event,
             Payload {
                 message: "event sent".to_owned(),
                 data,
@@ -72,18 +74,8 @@ fn fetch_data(
     return Some(data);
 }
 
-#[tauri::command]
-fn greet(app_handle: AppHandle, name: &str) -> String {
-    app_handle.db(|db| database::add_item(name, db)).unwrap();
-
-    let items = app_handle.db(|db| database::get_all(db)).unwrap();
-
-    let items_string = items.join(" | ");
-
-    format!("Your name log: {}", items_string)
-}
-
 fn main() {
+    _ = DIRECTORY_PATH.set("/home/linuxlolrandomxd/Desktop/scenarios".to_owned());
     let mut file_data = FileData::new();
 
     let start = std::time::Instant::now();
@@ -94,22 +86,23 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let handle = app.handle();
+            let window = app.get_window("main").unwrap();
+
+            _ = WINDOW.set(window);
 
             let app_state: State<AppState> = handle.state();
             let db =
                 database::initialize_database(&handle).expect("Database initialize should succeed");
             *app_state.db.lock().unwrap() = Some(db);
 
-            Ok({
-                let main_window = app.get_window("main").unwrap();
-                file_watcher::file_watcher_thread(&main_window);
-            })
+            file_watcher::file_watcher_thread();
+            Ok(())
         })
         .manage(AppState {
             db: Default::default(),
         })
         .manage(file_data)
-        .invoke_handler(tauri::generate_handler![fetch_data, greet])
+        .invoke_handler(tauri::generate_handler![fetch_data])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
