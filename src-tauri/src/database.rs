@@ -7,7 +7,7 @@ pub struct Settings {
     pub directory_path: String,
 }
 
-const CURRENT_DB_VERSION: u32 = 4;
+const CURRENT_DB_VERSION: u32 = 5;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -47,6 +47,7 @@ pub fn upgrade_database_if_needed(
                 DROP TABLE IF EXISTS game;
                 DROP TABLE IF EXISTS scenario;
                 DROP TABLE IF EXISTS state;
+                DROP TABLE IF EXISTS stats;
                 DROP TABLE IF EXISTS key_value;
                 DROP TABLE IF EXISTS tile;
                 DROP TABLE IF EXISTS playlist;
@@ -63,7 +64,7 @@ pub fn upgrade_database_if_needed(
                     FOREIGN KEY(scenario_id) REFERENCES scenario(id)
                 );
 
-                CREATE TABLE state(
+                CREATE TABLE stats(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     game_id INTEGER,
                     weapon TEXT NOT NULL,
@@ -151,15 +152,15 @@ pub fn upgrade_database_if_needed(
         )?;
 
         tx.commit()?;
-    }
 
-    println!("[Database]::database updated");
+        println!("[Database]::database updated");
+    }
 
     Ok(())
 }
 
 pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
-    let query = "SELECT * FROM setting";
+    let query = "SELECT * FROM setting WHERE id = 1";
 
     let result: Result<Settings, rusqlite::Error> = db.query_row(query, [], |row| {
         Ok(Settings {
@@ -173,7 +174,7 @@ pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
             Ok(settings)
         }
         Err(err) => {
-            println!("Error : {:?}", err);
+            println!("[Database]::Error : {:?}", err);
             Err(err)
         }
     }
@@ -181,7 +182,7 @@ pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
 
 pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqlite::Error> {
     let mut statement =
-        db.prepare("UPDATE setting SET directory_path = @directory_path WHERE id = 1")?;
+        db.prepare("INSERT INTO setting (id, directory_path) VALUES (1, @directory_path) ON CONFLICT(id) DO UPDATE SET directory_path = @directory_path")?;
 
     statement.execute(named_params! { "@directory_path": settings.directory_path })?;
 
