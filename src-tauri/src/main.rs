@@ -6,8 +6,8 @@ mod file_watcher;
 mod state;
 
 use state::AppState;
-use std::env;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
+use std::{env, path::PathBuf};
 use tauri::{Manager, State, Window};
 
 static DIRECTORY_PATH: OnceLock<String> = OnceLock::new();
@@ -74,6 +74,13 @@ fn fetch_data(
     return Some(data);
 }
 
+#[tauri::command]
+fn update_dir_path(path: String, state: State<AppState>) {
+    let state_file_watcher = state.file_watcher_handler.lock().unwrap().clone().unwrap();
+
+    let _ = state_file_watcher.send(PathBuf::from(path));
+}
+
 fn main() {
     _ = DIRECTORY_PATH.set("/home/linuxlolrandomxd/Desktop/scenarios".to_owned());
     let mut file_data = FileData::new();
@@ -84,25 +91,31 @@ fn main() {
     println!("Time elapsed is: {:?}", duration);
 
     tauri::Builder::default()
+        .manage(AppState {
+            db: Default::default(),
+            file_watcher_handler: Mutex::new(None),
+        })
         .setup(|app| {
             let handle = app.handle();
             let window = app.get_window("main").unwrap();
+            let app_state: State<AppState> = handle.state();
 
             _ = WINDOW.set(window);
 
-            let app_state: State<AppState> = handle.state();
             let db =
                 database::initialize_database(&handle).expect("Database initialize should succeed");
             *app_state.db.lock().unwrap() = Some(db);
 
-            file_watcher::file_watcher_thread();
+            let file_watcher_handler = file_watcher::file_watcher_thread();
+
+            let mut file_watcher = app_state.file_watcher_handler.lock().unwrap();
+
+            *file_watcher = Some(file_watcher_handler);
+
             Ok(())
         })
-        .manage(AppState {
-            db: Default::default(),
-        })
         .manage(file_data)
-        .invoke_handler(tauri::generate_handler![fetch_data])
+        .invoke_handler(tauri::generate_handler![fetch_data, update_dir_path])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
