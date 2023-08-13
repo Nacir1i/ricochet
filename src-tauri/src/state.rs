@@ -1,8 +1,14 @@
+use std::{
+    path::PathBuf,
+    sync::{mpsc::Sender, Mutex},
+};
+
 use rusqlite::Connection;
 use tauri::{AppHandle, Manager, State};
 
 pub struct AppState {
     pub db: std::sync::Mutex<Option<Connection>>,
+    pub file_watcher_handler: Mutex<Option<Sender<PathBuf>>>,
 }
 
 pub trait ServiceAccess {
