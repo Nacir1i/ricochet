@@ -5,27 +5,12 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
-use state::AppState;
+use state::{AppState, ServiceAccess};
 use std::sync::{Mutex, OnceLock};
 use std::{env, path::PathBuf};
-use tauri::{Manager, State, Window};
+use tauri::{AppHandle, Manager, State, Window};
 
-static DIRECTORY_PATH: OnceLock<String> = OnceLock::new();
 static WINDOW: OnceLock<Window> = OnceLock::new();
-
-#[derive(Debug)]
-pub struct FileData(std::sync::Mutex<Vec<file_reader::Data>>);
-
-impl FileData {
-    pub fn new() -> Self {
-        FileData(std::sync::Mutex::new(Vec::new()))
-    }
-
-    pub fn add_file_data(&mut self, data: file_reader::Data) {
-        let mut file_data = self.0.lock().unwrap();
-        file_data.push(data);
-    }
-}
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -47,49 +32,29 @@ fn emit_tauri_event(data: file_reader::Data, event: &str) {
         .unwrap()
 }
 
+// page: u8, limit: u8, state: State<AppState>
 #[tauri::command]
-fn fetch_data(
-    page: u8,
-    limit: u8,
-    file_data: tauri::State<FileData>,
-) -> Option<Vec<file_reader::Data>> {
-    let locked_file_data = file_data.0.lock().unwrap();
-
-    let start_index = (page - 1) as usize * limit as usize;
-
-    let end_index = std::cmp::min(
-        start_index + limit as usize,
-        locked_file_data.len() as usize,
-    );
-
-    if start_index >= locked_file_data.len() {
-        return None;
-    }
-
-    let data_slice = &locked_file_data[start_index..end_index];
-
-    let mut data: Vec<file_reader::Data> = Vec::new();
-    data.extend_from_slice(data_slice);
-
-    return Some(data);
-}
+fn fetch_data() {}
 
 #[tauri::command]
-fn update_dir_path(path: String, state: State<AppState>) {
-    let state_file_watcher = state.file_watcher_handler.lock().unwrap().clone().unwrap();
+fn update_dir_path(path: String, app_handle: AppHandle) {
+    app_handle
+        .db(|db| {
+            database::update_settings(
+                database::Settings {
+                    directory_path: path.to_owned(),
+                },
+                db,
+            )
+        })
+        .unwrap();
 
-    let _ = state_file_watcher.send(PathBuf::from(path));
+    app_handle.file_watcher_handler(|file_watcher| {
+        let _ = file_watcher.send(PathBuf::from(path));
+    })
 }
 
 fn main() {
-    _ = DIRECTORY_PATH.set("/home/linuxlolrandomxd/Desktop/scenarios".to_owned());
-    let mut file_data = FileData::new();
-
-    let start = std::time::Instant::now();
-    file_reader::read_existing_files(&mut file_data);
-    let duration = start.elapsed();
-    println!("Time elapsed is: {:?}", duration);
-
     tauri::Builder::default()
         .manage(AppState {
             db: Default::default(),
@@ -104,17 +69,25 @@ fn main() {
 
             let db =
                 database::initialize_database(&handle).expect("Database initialize should succeed");
-            *app_state.db.lock().unwrap() = Some(db);
 
-            let file_watcher_handler = file_watcher::file_watcher_thread();
+            let settings = database::get_settings(&db).unwrap_or(database::Settings {
+                directory_path: "/home/linuxlolrandomxd/Desktop/test".to_owned(),
+            });
+
+            let start = std::time::Instant::now();
+            file_reader::read_existing_files(&settings.directory_path);
+            let duration = start.elapsed();
+            println!("[Main]::time elapsed is: {:?}", duration);
+
+            let file_watcher_handler = file_watcher::file_watcher_thread(&settings.directory_path);
 
             let mut file_watcher = app_state.file_watcher_handler.lock().unwrap();
 
+            *app_state.db.lock().unwrap() = Some(db);
             *file_watcher = Some(file_watcher_handler);
 
             Ok(())
         })
-        .manage(file_data)
         .invoke_handler(tauri::generate_handler![fetch_data, update_dir_path])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

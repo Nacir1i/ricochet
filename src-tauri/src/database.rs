@@ -2,7 +2,12 @@ use rusqlite::{named_params, Connection};
 use std::fs;
 use tauri::AppHandle;
 
-const CURRENT_DB_VERSION: u32 = 2;
+#[derive(Debug)]
+pub struct Settings {
+    pub directory_path: String,
+}
+
+const CURRENT_DB_VERSION: u32 = 4;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -20,6 +25,8 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlit
     drop(user_pragma);
 
     upgrade_database_if_needed(&mut db, existing_user_version)?;
+
+    println!("[Database]::database initialized");
 
     Ok(db)
 }
@@ -46,6 +53,7 @@ pub fn upgrade_database_if_needed(
                 DROP TABLE IF EXISTS scenario_playlist;
                 DROP TABLE IF EXISTS playlist_collection;
                 DROP TABLE IF EXISTS playlist_playlist_collection;
+                DROP TABLE IF EXISTS setting;
 
                 CREATE TABLE game(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,31 +142,50 @@ pub fn upgrade_database_if_needed(
                     description TEXT NOT NULL,
                     created_at date DEFAULT CURRENT_TIMESTAMP
                 );
+
+                CREATE TABLE setting (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    directory_path TEXT NOT NULL
+                );
             ",
         )?;
 
         tx.commit()?;
     }
 
-    Ok(())
-}
-
-pub fn add_item(title: &str, db: &Connection) -> Result<(), rusqlite::Error> {
-    let mut statement = db.prepare("INSERT INTO items (title) VALUES (@title)")?;
-    statement.execute(named_params! { "@title": title })?;
+    println!("[Database]::database updated");
 
     Ok(())
 }
 
-pub fn get_all(db: &Connection) -> Result<Vec<String>, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT * FROM items")?;
-    let mut rows = statement.query([])?;
-    let mut items = Vec::new();
-    while let Some(row) = rows.next()? {
-        let title: String = row.get("title")?;
+pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
+    let query = "SELECT * FROM setting";
 
-        items.push(title);
+    let result: Result<Settings, rusqlite::Error> = db.query_row(query, [], |row| {
+        Ok(Settings {
+            directory_path: row.get(1)?,
+        })
+    });
+
+    match result {
+        Ok(settings) => {
+            println!("[Database]::Get settings : {:?}", settings);
+            Ok(settings)
+        }
+        Err(err) => {
+            println!("Error : {:?}", err);
+            Err(err)
+        }
     }
+}
 
-    Ok(items)
+pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqlite::Error> {
+    let mut statement =
+        db.prepare("UPDATE setting SET directory_path = @directory_path WHERE id = 1")?;
+
+    statement.execute(named_params! { "@directory_path": settings.directory_path })?;
+
+    println!("[Database]::Update settings : {:?}", settings);
+
+    Ok(())
 }

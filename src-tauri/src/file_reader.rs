@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::path::PathBuf;
 
-use crate::{FileData, DIRECTORY_PATH};
-
 #[derive(Clone, Debug, serde::Serialize)]
 pub struct Data {
     pub(crate) tiles: Vec<TilesRecords>,
@@ -104,28 +102,25 @@ pub fn read_file(
     Ok((tile_record_list, key_value_record_list, stats_record_list))
 }
 
-pub fn read_existing_files(file_data: &mut FileData) {
-    let binding = "/home/linuxlolrandomxd/Desktop/scenarios".to_owned();
-    let dir_path = DIRECTORY_PATH.get().unwrap_or(&binding);
+pub fn read_existing_files(path: &String) {
+    let dir_path = path.to_owned();
     let dir_entries = std::fs::read_dir(dir_path).unwrap();
 
     for file in dir_entries {
         match file {
             Ok(file_entry) => {
                 if let Ok((tiles, key_value, stats)) = read_file(&file_entry.path()) {
-                    let data = Data {
+                    let _data = Data {
                         tiles,
                         key_value,
                         stats,
                     };
-
-                    file_data.add_file_data(data);
                 } else {
-                    eprintln!("Error reading file: {:?}", file_entry.path());
+                    eprintln!("[File_reader]::Error reading file: {:?}", file_entry.path());
                 }
             }
             Err(err) => {
-                eprintln!("Error reading directory entry: {}", err);
+                eprintln!("[File_reader]::Error reading directory entry: {}", err);
             }
         }
     }
