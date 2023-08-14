@@ -67,17 +67,23 @@ fn main() {
 
             _ = WINDOW.set(window);
 
-            let db =
-                database::initialize_database(&handle).expect("Database initialize should succeed");
+            let mut db = database::initialize_database(&handle)
+                .expect("[Main]::Database initialize should succeed");
 
             let settings = database::get_settings(&db).unwrap_or(database::Settings {
                 directory_path: "/home/linuxlolrandomxd/Desktop/test".to_owned(),
             });
 
             let start = std::time::Instant::now();
-            file_reader::read_existing_files(&settings.directory_path);
-            let duration = start.elapsed();
-            println!("[Main]::time elapsed is: {:?}", duration);
+            let data_vec = file_reader::read_existing_files(&settings.directory_path);
+            println!("[Main]::time elapsed is: {:?}", start.elapsed());
+
+            for data in data_vec {
+                match database::insert_game(&data, &mut db) {
+                    Ok(()) => println!("[Main]::Game saved successfully:"),
+                    Err(err) => println!("[Main]::Error while saving game: {:?}", err),
+                }
+            }
 
             let file_watcher_handler = file_watcher::file_watcher_thread(&settings.directory_path);
 

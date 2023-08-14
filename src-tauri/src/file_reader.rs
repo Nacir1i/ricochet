@@ -1,15 +1,17 @@
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::hash::{Hash, Hasher};
+use std::mem::size_of;
 use std::path::PathBuf;
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, Hash)]
 pub struct Data {
-    pub(crate) tiles: Vec<TilesRecords>,
-    pub(crate) key_value: Vec<KeyValueRecord>,
-    pub(crate) stats: Stats,
+    pub tiles: Vec<TilesRecords>,
+    pub key_value: Vec<KeyValueRecord>,
+    pub stats: Stats,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Hash)]
 pub struct Timestamp {
     hours: u8,
     minutes: u8,
@@ -21,42 +23,85 @@ pub struct Timestamp {
 #[serde(rename_all = "PascalCase")]
 pub struct TilesRecords {
     #[serde(deserialize_with = "csv::invalid_option")]
-    kill: Option<u8>,
+    pub kill: Option<u16>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    timestamp: Option<Timestamp>,
+    pub timestamp: Option<String>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    bot: Option<String>,
+    pub bot: Option<String>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    weapon: Option<String>,
+    pub weapon: Option<String>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    ttk: Option<String>,
+    pub ttk: Option<String>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    shots: Option<u8>,
+    pub shots: Option<u8>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    accuracy: Option<f32>,
+    pub accuracy: Option<f32>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    damage_done: Option<u16>,
+    pub damage_done: Option<u16>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    damage_taken: Option<u16>,
+    pub damage_taken: Option<u16>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    efficiency: Option<f32>,
+    pub efficiency: Option<f32>,
     #[serde(deserialize_with = "csv::invalid_option")]
-    cheated: Option<bool>,
+    pub cheated: Option<bool>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+impl Hash for TilesRecords {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.kill.hash(hasher);
+        self.timestamp.hash(hasher);
+        self.bot.hash(hasher);
+        self.weapon.hash(hasher);
+        self.ttk.hash(hasher);
+        self.shots.hash(hasher);
+        self.damage_done.hash(hasher);
+        self.damage_taken.hash(hasher);
+        self.cheated.hash(hasher);
+
+        match self.efficiency {
+            Some(value) => {
+                let bits = value.to_bits();
+                bits.hash(hasher);
+            }
+            None => ().hash(hasher),
+        }
+        match self.accuracy {
+            Some(value) => {
+                let bits = value.to_bits();
+                bits.hash(hasher);
+            }
+            None => ().hash(hasher),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Hash)]
 pub struct KeyValueRecord {
-    key: String,
-    value: String,
+    pub key: String,
+    pub value: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct Stats {
-    weapon: String,
-    shots: u16,
-    hits: u16,
-    damage_done: f32,
-    damage_possible: f32,
+    pub weapon: String,
+    pub shots: u16,
+    pub hits: u16,
+    pub damage_done: f32,
+    pub damage_possible: f32,
+}
+
+impl Hash for Stats {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.weapon.hash(hasher);
+        self.shots.hash(hasher);
+        self.hits.hash(hasher);
+
+        let damage_done_bits = self.damage_done.to_bits();
+        damage_done_bits.hash(hasher);
+
+        let damage_possible_bits = self.damage_possible.to_bits();
+        damage_possible_bits.hash(hasher);
+    }
 }
 
 pub fn read_file(
@@ -102,7 +147,8 @@ pub fn read_file(
     Ok((tile_record_list, key_value_record_list, stats_record_list))
 }
 
-pub fn read_existing_files(path: &String) {
+pub fn read_existing_files(path: &String) -> Vec<Data> {
+    let mut data_vec = Vec::new();
     let dir_path = path.to_owned();
     let dir_entries = std::fs::read_dir(dir_path).unwrap();
 
@@ -110,11 +156,21 @@ pub fn read_existing_files(path: &String) {
         match file {
             Ok(file_entry) => {
                 if let Ok((tiles, key_value, stats)) = read_file(&file_entry.path()) {
-                    let _data = Data {
+                    let data = Data {
                         tiles,
                         key_value,
                         stats,
                     };
+
+                    let data_size = size_of::<Data>()
+                        + size_of::<TilesRecords>() * data.tiles.len()
+                        + size_of::<KeyValueRecord>() * data.key_value.len()
+                        + size_of::<Stats>()
+                        + size_of::<Timestamp>() * data.tiles.len();
+
+                    data_vec.push(data);
+
+                    println!("Estimated size of Data struct: {} bytes", data_size);
                 } else {
                     eprintln!("[File_reader]::Error reading file: {:?}", file_entry.path());
                 }
@@ -124,4 +180,6 @@ pub fn read_existing_files(path: &String) {
             }
         }
     }
+
+    data_vec
 }

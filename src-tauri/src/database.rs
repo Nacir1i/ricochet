@@ -1,13 +1,24 @@
-use rusqlite::{named_params, Connection};
+use rusqlite::{named_params, params, Connection, Error, Transaction};
+use std::collections::hash_map::DefaultHasher;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use tauri::AppHandle;
+
+use crate::file_reader::{Data, KeyValueRecord};
 
 #[derive(Debug)]
 pub struct Settings {
     pub directory_path: String,
 }
 
-const CURRENT_DB_VERSION: u32 = 5;
+pub struct Scenario {
+    pub id: i64,
+    pub name: String,
+    pub difficulty: String,
+    pub create_at: String,
+}
+
+const CURRENT_DB_VERSION: u32 = 7;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -44,6 +55,8 @@ pub fn upgrade_database_if_needed(
 
         tx.execute_batch(
             "
+                PRAGMA foreign_keys = ON;
+
                 DROP TABLE IF EXISTS game;
                 DROP TABLE IF EXISTS scenario;
                 DROP TABLE IF EXISTS state;
@@ -58,10 +71,11 @@ pub fn upgrade_database_if_needed(
 
                 CREATE TABLE game(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    hash INTEGER,
                     scenario_id INTEGER,
                     name TEXT NOT NULL,
                     created_at date DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(scenario_id) REFERENCES scenario(id)
+                    FOREIGN KEY(scenario_id) REFERENCES scenario(id) ON DELETE CASCADE
                 );
 
                 CREATE TABLE stats(
@@ -73,7 +87,7 @@ pub fn upgrade_database_if_needed(
                     damage_done REAL NOT NULL,
                     damage_possible REAL NOT NULL,
                     created_at date DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(game_id) REFERENCES game(id)
+                    FOREIGN KEY(game_id) REFERENCES game(id) ON DELETE CASCADE
                 );
 
                 CREATE TABLE key_value(
@@ -82,7 +96,7 @@ pub fn upgrade_database_if_needed(
                     key TEXT DEFAULT '_',
                     value TEXT DEFAULT '_',
                     created_at date DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(game_id) REFERENCES game(id)
+                    FOREIGN KEY(game_id) REFERENCES game(id) ON DELETE CASCADE
                 );
 
                 CREATE TABLE tile(
@@ -100,7 +114,7 @@ pub fn upgrade_database_if_needed(
                     efficiency REAL,
                     cheated BOOLEAN NOT NULL CHECK(cheated IN (0, 1, '0', '1')),
                     created_at date DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(game_id) REFERENCES game(id)
+                    FOREIGN KEY(game_id) REFERENCES game(id) ON DELETE CASCADE
                 ); 
 
                 CREATE TABLE scenario (
@@ -189,4 +203,163 @@ pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqli
     println!("[Database]::Update settings : {:?}", settings);
 
     Ok(())
+}
+
+fn game_exists(hash: u64, db: &Connection) -> Result<bool, rusqlite::Error> {
+    let query = "SELECT COUNT(*) FROM game WHERE hash = ?";
+    let count: i64 = db.query_row(query, [hash], |row| row.get(0))?;
+
+    Ok(count > 0)
+}
+
+fn scenario_exists(name: &String, db: &Connection) -> Result<Option<Scenario>, rusqlite::Error> {
+    let query = "SELECT * FROM scenario WHERE name = ? LIMIT 1";
+    let result: Result<Scenario, Error> = db.query_row(query, &[name], |row| {
+        Ok(Scenario {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            difficulty: row.get(2)?,
+            create_at: row.get(3)?,
+        })
+    });
+
+    match result {
+        Ok(game) => Ok(Some(game)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(err) => Err(err),
+    }
+}
+
+fn insert_game_data(data: &Data, game_id: i64, transaction: &Transaction) -> Result<(), Error> {
+    let query = "INSERT INTO stats (
+                            weapon,
+                            shots,
+                            hits,
+                            damage_done,
+                            damage_possible,
+                            game_id
+                        ) VALUES (?, ?, ?, ?, ?, ?)";
+    transaction.prepare(query)?.execute(params![
+        data.stats.weapon,
+        data.stats.shots,
+        data.stats.hits,
+        data.stats.damage_done,
+        data.stats.damage_possible,
+        game_id,
+    ])?;
+
+    let query = "INSERT INTO tile (
+                            kill,
+                            timestamp,
+                            bot,
+                            weapon,
+                            ttk,
+                            shots,
+                            accuracy,
+                            damage_done,
+                            damage_possible,
+                            efficiency,
+                            cheated,
+                            game_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    for tile in &data.tiles {
+        transaction.prepare(query)?.execute(params![
+            tile.kill,
+            tile.timestamp,
+            tile.bot,
+            tile.weapon,
+            tile.ttk,
+            tile.shots,
+            tile.accuracy,
+            tile.damage_done,
+            tile.damage_taken,
+            tile.efficiency,
+            tile.cheated,
+            game_id,
+        ])?;
+    }
+
+    let query = "INSERT INTO key_value (key, value) VALUES (?, ?)";
+    for kv_record in &data.key_value {
+        transaction
+            .prepare(query)?
+            .execute(params![&kv_record.key, &kv_record.value,])?;
+    }
+
+    Ok(())
+}
+
+pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Error> {
+    let hash = calculate_hash(&data);
+
+    match game_exists(hash, db) {
+        Ok(exists) => {
+            if exists {
+                println!("[Database]::Game with hash '{}' exists.", hash);
+            } else {
+                println!("[Database]::Game with hash '{}' does not exist.", hash);
+
+                let key_value_vec = data
+                    .key_value
+                    .iter()
+                    .filter(|key_value| key_value.key == "Scenario:")
+                    .cloned()
+                    .collect::<Vec<KeyValueRecord>>();
+
+                let scenario_name = &key_value_vec[0].value;
+
+                match scenario_exists(scenario_name, db) {
+                    Ok(Some(scenario)) => {
+                        println!("[Database]::Scenario with name '{}' exists.", scenario_name);
+
+                        let transaction = db.transaction()?;
+
+                        let query =
+                            "INSERT INTO game (name, hash, scenario_id) VALUES ('name', ?, ?)";
+                        transaction
+                            .prepare(query)?
+                            .execute(params![hash, scenario.id])?;
+                        let game_id = transaction.last_insert_rowid();
+
+                        let _ = insert_game_data(data, game_id, &transaction);
+
+                        transaction.commit()?;
+                    }
+                    Ok(None) => {
+                        println!(
+                            "[Database]::Scenario with name '{}' does not exists.",
+                            scenario_name
+                        );
+
+                        let transaction = db.transaction()?;
+
+                        let query = "INSERT INTO scenario (name, difficulty) VALUES (?, 'EASY')";
+                        transaction.prepare(query)?.execute([scenario_name])?;
+                        let scenario_id = transaction.last_insert_rowid();
+
+                        let query =
+                            "INSERT INTO game (name, hash, scenario_id) VALUES ('name', ?, ?)";
+                        transaction
+                            .prepare(query)?
+                            .execute(params![hash, scenario_id])?;
+                        let game_id = transaction.last_insert_rowid();
+
+                        let _ = insert_game_data(data, game_id, &transaction);
+
+                        transaction.commit()?;
+                    }
+                    Err(err) => eprintln!("[Database]::Error: {}", err),
+                }
+            }
+        }
+        Err(err) => eprintln!("[Database]::Error: {}", err),
+    }
+
+    Ok(())
+}
+
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
 }
