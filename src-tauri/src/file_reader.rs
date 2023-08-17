@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 use std::mem::size_of;
 use std::path::PathBuf;
 
-#[derive(Clone, Debug, serde::Serialize, Hash)]
+#[derive(Clone, Debug, Serialize, Deserialize, Hash)]
 pub struct Data {
     pub tiles: Vec<TilesRecords>,
     pub key_value: Vec<KeyValueRecord>,

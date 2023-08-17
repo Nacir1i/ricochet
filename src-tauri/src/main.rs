@@ -20,7 +20,7 @@ struct Payload {
 }
 
 fn emit_tauri_event(data: file_reader::Data, event: &str) {
-    let window = WINDOW.get().expect("Window is un available");
+    let window = WINDOW.get().expect("Window is not available");
 
     window
         .emit(
@@ -31,6 +31,14 @@ fn emit_tauri_event(data: file_reader::Data, event: &str) {
             },
         )
         .unwrap()
+}
+
+#[tauri::command]
+fn insert_game(data: Data, app_handle: AppHandle) {
+    app_handle.db_mut(|db| match database::insert_game(&data, db) {
+        Ok(()) => println!("[Main]::game saved"),
+        Err(err) => eprintln!("[Main]::insert game Error : {:?}", err),
+    })
 }
 
 #[tauri::command]
@@ -125,7 +133,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             fetch_data,
             update_dir_path,
-            clear_database
+            clear_database,
+            insert_game
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
