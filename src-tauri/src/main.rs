@@ -5,6 +5,7 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
+use database::Scenario;
 use file_reader::Data;
 use state::{AppState, ServiceAccess};
 use std::sync::{Mutex, OnceLock};
@@ -18,6 +19,40 @@ struct Payload {
     message: String,
     data: file_reader::Data,
 }
+
+// TODO: future common error solution
+// pub type CommonResult<T> = std::result::Result<T, CommonError>;
+
+// #[derive(Debug)]
+// pub enum CommonError {
+//     RusqliteError(rusqlite::Error),
+//     CoreError(Box<dyn std::error::Error>),
+// }
+
+// impl serde::Serialize for CommonError {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::Serializer,
+//     {
+//         match self {
+//             CommonError::RusqliteError(rusqlite_error) => {
+//                 serializer.serialize_str(rusqlite_error.to_string().as_ref())
+//             }
+//             CommonError::CoreError(core_error) => {
+//                 serializer.serialize_str(core_error.to_string().as_ref())
+//             }
+//         }
+//     }
+// }
+
+// impl Display for CommonError {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             CommonError::RusqliteError(rusqlite_error) => write!(f, "{}", rusqlite_error),
+//             CommonError::CoreError(core_error) => write!(f, "{}", core_error),
+//         }
+//     }
+// }
 
 fn emit_tauri_event(data: file_reader::Data, event: &str) {
     let window = WINDOW.get().expect("Window is not available");
@@ -42,17 +77,45 @@ fn insert_game(data: Data, app_handle: AppHandle) {
 }
 
 #[tauri::command]
-fn fetch_data(page: u8, limit: u8, app_handle: AppHandle) -> Vec<Data> {
+fn fetch_game_page(page: u8, limit: u8, app_handle: AppHandle) -> Vec<Data> {
     let mut data: Vec<Data> = Vec::new();
 
     app_handle.db(|db| {
-        match database::fetch_page(page, limit, db) {
+        match database::fetch_game_page(page, limit, db) {
             Ok(fetched_data) => data = fetched_data,
             Err(err) => eprintln!("[Main]::fetch data Error : {}", err),
         };
     });
 
     data
+}
+
+#[tauri::command]
+fn fetch_scenarios(app_handle: AppHandle) -> Vec<Scenario> {
+    let mut vec: Vec<Scenario> = Vec::new();
+
+    app_handle.db(|db| {
+        match database::fetch_scenarios(db) {
+            Ok(fetched_scenarios) => vec = fetched_scenarios,
+            Err(err) => eprintln!("[Main]::fetch scenarios Error : {}", err),
+        };
+    });
+
+    vec
+}
+
+#[tauri::command]
+fn fetch_scenarios_games(scenario_id: u64, app_handle: AppHandle) -> Vec<Data> {
+    let mut vec: Vec<Data> = Vec::new();
+
+    app_handle.db(|db| {
+        match database::fetch_scenarios_games(scenario_id, db) {
+            Ok(fetched_games) => vec = fetched_games,
+            Err(err) => eprintln!("[Main]::fetch scenarios Error : {}", err),
+        };
+    });
+
+    vec
 }
 
 #[tauri::command]
@@ -131,10 +194,12 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            fetch_data,
+            fetch_game_page,
             update_dir_path,
             clear_database,
-            insert_game
+            insert_game,
+            fetch_scenarios,
+            fetch_scenarios_games
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

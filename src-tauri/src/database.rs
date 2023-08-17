@@ -1,4 +1,5 @@
 use rusqlite::{named_params, params, Connection, Error, Transaction};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::hash::Hash;
 use std::{collections::hash_map::DefaultHasher, hash::Hasher};
@@ -6,11 +7,12 @@ use tauri::AppHandle;
 
 use crate::file_reader::{Data, KeyValueRecord, Stats, TilesRecords};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
     pub directory_path: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Scenario {
     pub id: u64,
     pub name: String,
@@ -18,7 +20,7 @@ pub struct Scenario {
     pub create_at: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Game {
     pub id: u64,
     pub name: String,
@@ -203,103 +205,6 @@ pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
     }
 }
 
-pub fn fetch_key_value(
-    game_id: u64,
-    db: &Connection,
-) -> Result<Vec<KeyValueRecord>, rusqlite::Error> {
-    let mut vec: Vec<KeyValueRecord> = Vec::new();
-
-    let query = "SELECT * FROM key_value WHERE game_id = ?";
-    let mut statement = db.prepare(query)?;
-    let mut rows = statement.query([game_id])?;
-
-    while let Some(row) = rows.next()? {
-        let key_value = KeyValueRecord {
-            key: row.get(2)?,
-            value: row.get(3)?,
-        };
-
-        vec.push(key_value);
-    }
-
-    Ok(vec)
-}
-
-pub fn fetch_tiles(game_id: u64, db: &Connection) -> Result<Vec<TilesRecords>, rusqlite::Error> {
-    let mut vec: Vec<TilesRecords> = Vec::new();
-
-    let query = "SELECT * FROM tile WHERE game_id = ?";
-    let mut statement = db.prepare(query)?;
-    let mut rows = statement.query([game_id])?;
-
-    while let Some(row) = rows.next()? {
-        let tile = TilesRecords {
-            kill: row.get(2)?,
-            timestamp: row.get(3)?,
-            bot: row.get(4)?,
-            weapon: row.get(5)?,
-            ttk: row.get(6)?,
-            shots: row.get(7)?,
-            accuracy: row.get(8)?,
-            damage_done: row.get(9)?,
-            damage_taken: row.get(10)?,
-            efficiency: row.get(11)?,
-            cheated: row.get(12)?,
-        };
-
-        vec.push(tile);
-    }
-
-    Ok(vec)
-}
-
-pub fn fetch_stats(game_id: u64, db: &Connection) -> Result<Stats, rusqlite::Error> {
-    let query = "SELECT * FROM stats WHERE game_id = ?";
-    let result = db.query_row(query, [game_id], |row| {
-        Ok(Stats {
-            weapon: row.get(2)?,
-            shots: row.get(3)?,
-            hits: row.get(4)?,
-            damage_done: row.get(5)?,
-            damage_possible: row.get(6)?,
-        })
-    });
-
-    result
-}
-
-pub fn fetch_page(page: u8, limit: u8, db: &Connection) -> Result<Vec<Data>, rusqlite::Error> {
-    let mut vec: Vec<Data> = Vec::new();
-
-    let query = "SELECT * FROM game LIMIT ? OFFSET ?";
-    let mut statement = db.prepare(query)?;
-    let mut rows = statement.query([limit, (page - 1) * limit])?;
-
-    while let Some(row) = rows.next()? {
-        let game = Game {
-            id: row.get(0)?,
-            hash: row.get(1)?,
-            scenario_id: row.get(2)?,
-            name: row.get(3)?,
-            create_at: row.get(4)?,
-        };
-
-        let key_value = fetch_key_value(game.id, db)?;
-        let tiles = fetch_tiles(game.id, db)?;
-        let stats = fetch_stats(game.id, db)?;
-
-        let data = Data {
-            key_value,
-            tiles,
-            stats,
-        };
-
-        vec.push(data)
-    }
-
-    Ok(vec)
-}
-
 pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqlite::Error> {
     let mut statement =
         db.prepare("INSERT INTO setting (id, directory_path) VALUES (1, @directory_path) ON CONFLICT(id) DO UPDATE SET directory_path = @directory_path")?;
@@ -475,8 +380,6 @@ pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Err
         Err(err) => eprintln!("[Database]::(game exists check)Error: {}", err),
     }
 
-    println!("------------------------------------");
-
     Ok(())
 }
 
@@ -501,4 +404,182 @@ pub fn clear_database(db: &mut Connection) -> Result<(), rusqlite::Error> {
     let _ = tx.commit();
 
     Ok(())
+}
+
+pub fn fetch_key_value(
+    game_id: u64,
+    db: &Connection,
+) -> Result<Vec<KeyValueRecord>, rusqlite::Error> {
+    let mut vec: Vec<KeyValueRecord> = Vec::new();
+
+    let query = "SELECT * FROM key_value WHERE game_id = ?";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([game_id])?;
+
+    while let Some(row) = rows.next()? {
+        let key_value = KeyValueRecord {
+            key: row.get(2)?,
+            value: row.get(3)?,
+        };
+
+        vec.push(key_value);
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_tiles(game_id: u64, db: &Connection) -> Result<Vec<TilesRecords>, rusqlite::Error> {
+    let mut vec: Vec<TilesRecords> = Vec::new();
+
+    let query = "SELECT * FROM tile WHERE game_id = ?";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([game_id])?;
+
+    while let Some(row) = rows.next()? {
+        let tile = TilesRecords {
+            kill: row.get(2)?,
+            timestamp: row.get(3)?,
+            bot: row.get(4)?,
+            weapon: row.get(5)?,
+            ttk: row.get(6)?,
+            shots: row.get(7)?,
+            accuracy: row.get(8)?,
+            damage_done: row.get(9)?,
+            damage_taken: row.get(10)?,
+            efficiency: row.get(11)?,
+            cheated: row.get(12)?,
+        };
+
+        vec.push(tile);
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_stats(game_id: u64, db: &Connection) -> Result<Stats, rusqlite::Error> {
+    let query = "SELECT * FROM stats WHERE game_id = ?";
+    let result = db.query_row(query, [game_id], |row| {
+        Ok(Stats {
+            weapon: row.get(2)?,
+            shots: row.get(3)?,
+            hits: row.get(4)?,
+            damage_done: row.get(5)?,
+            damage_possible: row.get(6)?,
+        })
+    });
+
+    result
+}
+
+pub fn fetch_game_page(page: u8, limit: u8, db: &Connection) -> Result<Vec<Data>, rusqlite::Error> {
+    let mut vec: Vec<Data> = Vec::new();
+
+    let query = "SELECT * FROM game LIMIT ? OFFSET ?";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([limit, (page - 1) * limit])?;
+
+    while let Some(row) = rows.next()? {
+        let game = Game {
+            id: row.get(0)?,
+            hash: row.get(1)?,
+            scenario_id: row.get(2)?,
+            name: row.get(3)?,
+            create_at: row.get(4)?,
+        };
+
+        let key_value = fetch_key_value(game.id, db)?;
+        let tiles = fetch_tiles(game.id, db)?;
+        let stats = fetch_stats(game.id, db)?;
+
+        let data = Data {
+            key_value,
+            tiles,
+            stats,
+        };
+
+        vec.push(data)
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_gamed_with_scenario_id(
+    game_id: u64,
+    db: &Connection,
+) -> Result<Vec<Data>, rusqlite::Error> {
+    let mut vec: Vec<Data> = Vec::new();
+
+    let query = "SELECT * FROM game WHERE id = ?";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([game_id])?;
+
+    while let Some(row) = rows.next()? {
+        let game = Game {
+            id: row.get(0)?,
+            hash: row.get(1)?,
+            scenario_id: row.get(2)?,
+            name: row.get(3)?,
+            create_at: row.get(4)?,
+        };
+
+        let key_value = fetch_key_value(game.id, db)?;
+        let tiles = fetch_tiles(game.id, db)?;
+        let stats = fetch_stats(game.id, db)?;
+
+        let data = Data {
+            key_value,
+            tiles,
+            stats,
+        };
+
+        vec.push(data)
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_scenarios(db: &Connection) -> Result<Vec<Scenario>, rusqlite::Error> {
+    let mut vec: Vec<Scenario> = Vec::new();
+
+    let query = "SELECT * FROM scenarios";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([])?;
+
+    while let Some(row) = rows.next()? {
+        let scenario = Scenario {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            difficulty: row.get(2)?,
+            create_at: row.get(3)?,
+        };
+
+        vec.push(scenario)
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_scenarios_games(
+    scenario_id: u64,
+    db: &Connection,
+) -> Result<Vec<Data>, rusqlite::Error> {
+    let query = "SELECT * FROM scenario WHERE id = ?";
+
+    let result = db.query_row(query, [scenario_id], |row| {
+        Ok(Scenario {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            difficulty: row.get(2)?,
+            create_at: row.get(3)?,
+        })
+    });
+
+    match result {
+        Ok(scenario) => {
+            let games = fetch_gamed_with_scenario_id(scenario.id, db)?;
+
+            Ok(games)
+        }
+        Err(err) => Err(err),
+    }
 }

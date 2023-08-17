@@ -34,7 +34,10 @@
 
   async function fetch_data() {
     try {
-      const data = await invoke<Game[]>("fetch_data", { page: 1, limit: 50 });
+      const data = await invoke<Game[]>("fetch_game_page", {
+        page: 1,
+        limit: 50,
+      });
 
       if (data) {
         set_history(data);
