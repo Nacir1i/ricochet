@@ -1,10 +1,10 @@
 use rusqlite::{named_params, params, Connection, Error, Transaction};
-use std::collections::hash_map::DefaultHasher;
 use std::fs;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
+use std::{collections::hash_map::DefaultHasher, hash::Hasher};
 use tauri::AppHandle;
 
-use crate::file_reader::{Data, KeyValueRecord};
+use crate::file_reader::{Data, KeyValueRecord, Stats, TilesRecords};
 
 #[derive(Debug)]
 pub struct Settings {
@@ -12,13 +12,22 @@ pub struct Settings {
 }
 
 pub struct Scenario {
-    pub id: i64,
+    pub id: u64,
     pub name: String,
     pub difficulty: String,
     pub create_at: String,
 }
 
-const CURRENT_DB_VERSION: u32 = 7;
+#[derive(Debug)]
+pub struct Game {
+    pub id: u64,
+    pub name: String,
+    pub hash: i64,
+    pub scenario_id: u64,
+    pub create_at: String,
+}
+
+const CURRENT_DB_VERSION: u32 = 4;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -71,8 +80,8 @@ pub fn upgrade_database_if_needed(
 
                 CREATE TABLE game(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    hash INTEGER,
-                    scenario_id INTEGER,
+                    hash INTEGER NOT NULL,
+                    scenario_id INTEGER NOT NULL,
                     name TEXT NOT NULL,
                     created_at date DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY(scenario_id) REFERENCES scenario(id) ON DELETE CASCADE
@@ -80,7 +89,7 @@ pub fn upgrade_database_if_needed(
 
                 CREATE TABLE stats(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    game_id INTEGER,
+                    game_id INTEGER NOT NULL,
                     weapon TEXT NOT NULL,
                     shots INTEGER NOT NULL,
                     hits INTEGER NOT NULL,
@@ -92,7 +101,7 @@ pub fn upgrade_database_if_needed(
 
                 CREATE TABLE key_value(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    game_id INTEGER,
+                    game_id INTEGER NOT NULL,
                     key TEXT DEFAULT '_',
                     value TEXT DEFAULT '_',
                     created_at date DEFAULT CURRENT_TIMESTAMP,
@@ -101,12 +110,12 @@ pub fn upgrade_database_if_needed(
 
                 CREATE TABLE tile(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    game_id INTEGER,
+                    game_id INTEGER NOT NULL,
                     kill INTEGER,
                     timestamp TEXT,
                     bot TEXT,
                     weapon TEXT,
-                    tkt TEXT,
+                    ttk TEXT,
                     shots INTEGER,
                     accuracy REAL,
                     damage_done INTEGER,
@@ -176,7 +185,7 @@ pub fn upgrade_database_if_needed(
 pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
     let query = "SELECT * FROM setting WHERE id = 1";
 
-    let result: Result<Settings, rusqlite::Error> = db.query_row(query, [], |row| {
+    let result = db.query_row(query, [], |row| {
         Ok(Settings {
             directory_path: row.get(1)?,
         })
@@ -188,10 +197,107 @@ pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
             Ok(settings)
         }
         Err(err) => {
-            println!("[Database]::Error : {:?}", err);
+            println!("[Database]::(get_settings)Error : {:?}", err);
             Err(err)
         }
     }
+}
+
+pub fn fetch_key_value(
+    game_id: u64,
+    db: &Connection,
+) -> Result<Vec<KeyValueRecord>, rusqlite::Error> {
+    let mut vec: Vec<KeyValueRecord> = Vec::new();
+
+    let query = "SELECT * FROM key_value WHERE game_id = ?";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([game_id])?;
+
+    while let Some(row) = rows.next()? {
+        let key_value = KeyValueRecord {
+            key: row.get(2)?,
+            value: row.get(3)?,
+        };
+
+        vec.push(key_value);
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_tiles(game_id: u64, db: &Connection) -> Result<Vec<TilesRecords>, rusqlite::Error> {
+    let mut vec: Vec<TilesRecords> = Vec::new();
+
+    let query = "SELECT * FROM tile WHERE game_id = ?";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([game_id])?;
+
+    while let Some(row) = rows.next()? {
+        let tile = TilesRecords {
+            kill: row.get(2)?,
+            timestamp: row.get(3)?,
+            bot: row.get(4)?,
+            weapon: row.get(5)?,
+            ttk: row.get(6)?,
+            shots: row.get(7)?,
+            accuracy: row.get(8)?,
+            damage_done: row.get(9)?,
+            damage_taken: row.get(10)?,
+            efficiency: row.get(11)?,
+            cheated: row.get(12)?,
+        };
+
+        vec.push(tile);
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_stats(game_id: u64, db: &Connection) -> Result<Stats, rusqlite::Error> {
+    let query = "SELECT * FROM stats WHERE game_id = ?";
+    let result = db.query_row(query, [game_id], |row| {
+        Ok(Stats {
+            weapon: row.get(2)?,
+            shots: row.get(3)?,
+            hits: row.get(4)?,
+            damage_done: row.get(5)?,
+            damage_possible: row.get(6)?,
+        })
+    });
+
+    result
+}
+
+pub fn fetch_page(page: u8, limit: u8, db: &Connection) -> Result<Vec<Data>, rusqlite::Error> {
+    let mut vec: Vec<Data> = Vec::new();
+
+    let query = "SELECT * FROM game LIMIT ? OFFSET ?";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([limit, (page - 1) * limit])?;
+
+    while let Some(row) = rows.next()? {
+        let game = Game {
+            id: row.get(0)?,
+            hash: row.get(1)?,
+            scenario_id: row.get(2)?,
+            name: row.get(3)?,
+            create_at: row.get(4)?,
+        };
+
+        let key_value = fetch_key_value(game.id, db)?;
+        let tiles = fetch_tiles(game.id, db)?;
+        let stats = fetch_stats(game.id, db)?;
+
+        let data = Data {
+            key_value,
+            tiles,
+            stats,
+        };
+
+        vec.push(data)
+    }
+
+    Ok(vec)
 }
 
 pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqlite::Error> {
@@ -205,15 +311,27 @@ pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqli
     Ok(())
 }
 
-fn game_exists(hash: u64, db: &Connection) -> Result<bool, rusqlite::Error> {
-    let query = "SELECT COUNT(*) FROM game WHERE hash = ?";
-    let count: i64 = db.query_row(query, [hash], |row| row.get(0))?;
+fn game_exists(hash: i64, db: &Connection) -> Result<bool, rusqlite::Error> {
+    let query = "SELECT * FROM game WHERE hash = ?";
 
-    Ok(count > 0)
+    let result = db.query_row(query, [hash], |row| {
+        Ok(Game {
+            id: row.get(0)?,
+            hash: row.get(1)?,
+            scenario_id: row.get(2)?,
+            name: row.get(3)?,
+            create_at: row.get(4)?,
+        })
+    });
+
+    match result {
+        Ok(_game) => Ok(true),
+        Err(_err) => Ok(false),
+    }
 }
 
 fn scenario_exists(name: &String, db: &Connection) -> Result<Option<Scenario>, rusqlite::Error> {
-    let query = "SELECT * FROM scenario WHERE name = ? LIMIT 1";
+    let query = "SELECT * FROM scenario WHERE name = ?";
     let result: Result<Scenario, Error> = db.query_row(query, &[name], |row| {
         Ok(Scenario {
             id: row.get(0)?,
@@ -274,23 +392,25 @@ fn insert_game_data(data: &Data, game_id: i64, transaction: &Transaction) -> Res
             tile.damage_done,
             tile.damage_taken,
             tile.efficiency,
-            tile.cheated,
+            0,
             game_id,
         ])?;
     }
 
-    let query = "INSERT INTO key_value (key, value) VALUES (?, ?)";
-    for kv_record in &data.key_value {
+    let query = "INSERT INTO key_value (key, value, game_id) VALUES (?, ?, ?)";
+    for key_value in &data.key_value {
         transaction
             .prepare(query)?
-            .execute(params![&kv_record.key, &kv_record.value,])?;
+            .execute(params![&key_value.key, &key_value.value, game_id])?;
     }
 
     Ok(())
 }
 
 pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Error> {
+    println!("------------------------------------");
     let hash = calculate_hash(&data);
+    println!("hash: {}", hash);
 
     match game_exists(hash, db) {
         Ok(exists) => {
@@ -321,7 +441,7 @@ pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Err
                             .execute(params![hash, scenario.id])?;
                         let game_id = transaction.last_insert_rowid();
 
-                        let _ = insert_game_data(data, game_id, &transaction);
+                        let _inserted_result = insert_game_data(data, game_id, &transaction)?;
 
                         transaction.commit()?;
                     }
@@ -344,22 +464,41 @@ pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Err
                             .execute(params![hash, scenario_id])?;
                         let game_id = transaction.last_insert_rowid();
 
-                        let _ = insert_game_data(data, game_id, &transaction);
+                        let _inserted_result = insert_game_data(data, game_id, &transaction)?;
 
                         transaction.commit()?;
                     }
-                    Err(err) => eprintln!("[Database]::Error: {}", err),
+                    Err(err) => eprintln!("[Database]::(scenario exists check)Error: {}", err),
                 }
             }
         }
-        Err(err) => eprintln!("[Database]::Error: {}", err),
+        Err(err) => eprintln!("[Database]::(game exists check)Error: {}", err),
     }
+
+    println!("------------------------------------");
 
     Ok(())
 }
 
-fn calculate_hash<T: Hash>(t: &T) -> u64 {
+fn calculate_hash<T: Hash>(t: &T) -> i64 {
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
-    s.finish()
+    s.finish() as i64
+}
+
+pub fn clear_database(db: &mut Connection) -> Result<(), rusqlite::Error> {
+    let query = "
+        DELETE FROM key_value;
+        DELETE FROM tile;
+        DELETE FROM stats;
+        DELETE FROM game;
+        DELETE FROM scenario;
+    ";
+
+    let tx = db.transaction()?;
+
+    let _ = tx.execute_batch(query);
+    let _ = tx.commit();
+
+    Ok(())
 }

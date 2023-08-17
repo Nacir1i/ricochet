@@ -18,4 +18,7 @@
 <div>
   <h1>Settings</h1>
   <button on:click={changeDirPath}>click</button>
+  <button on:click={async () => await invoke("clear_database")}
+    >clear database</button
+  >
 </div>

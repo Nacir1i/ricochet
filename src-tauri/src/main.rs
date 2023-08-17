@@ -5,6 +5,7 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
+use file_reader::Data;
 use state::{AppState, ServiceAccess};
 use std::sync::{Mutex, OnceLock};
 use std::{env, path::PathBuf};
@@ -32,9 +33,27 @@ fn emit_tauri_event(data: file_reader::Data, event: &str) {
         .unwrap()
 }
 
-// page: u8, limit: u8, state: State<AppState>
 #[tauri::command]
-fn fetch_data() {}
+fn fetch_data(page: u8, limit: u8, app_handle: AppHandle) -> Vec<Data> {
+    let mut data: Vec<Data> = Vec::new();
+
+    app_handle.db(|db| {
+        match database::fetch_page(page, limit, db) {
+            Ok(fetched_data) => data = fetched_data,
+            Err(err) => eprintln!("[Main]::fetch data Error : {}", err),
+        };
+    });
+
+    data
+}
+
+#[tauri::command]
+fn clear_database(app_handle: AppHandle) {
+    match app_handle.db_mut(|mut db| database::clear_database(&mut db)) {
+        Ok(()) => println!("[Main]::clear_database was successful"),
+        Err(err) => eprintln!("[Main]::clear_database Error : {:?}", err),
+    }
+}
 
 #[tauri::command]
 fn update_dir_path(path: String, app_handle: AppHandle) {
@@ -76,14 +95,23 @@ fn main() {
 
             let start = std::time::Instant::now();
             let data_vec = file_reader::read_existing_files(&settings.directory_path);
-            println!("[Main]::time elapsed is: {:?}", start.elapsed());
+            println!(
+                "[Main]::(reading files: {})time elapsed is: {:?}",
+                data_vec.len(),
+                start.elapsed()
+            );
 
+            let start = std::time::Instant::now();
             for data in data_vec {
                 match database::insert_game(&data, &mut db) {
                     Ok(()) => println!("[Main]::Game saved successfully:"),
                     Err(err) => println!("[Main]::Error while saving game: {:?}", err),
                 }
             }
+            println!(
+                "[Main]::(running queries)time elapsed is: {:?}",
+                start.elapsed()
+            );
 
             let file_watcher_handler = file_watcher::file_watcher_thread(&settings.directory_path);
 
@@ -94,7 +122,11 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![fetch_data, update_dir_path])
+        .invoke_handler(tauri::generate_handler![
+            fetch_data,
+            update_dir_path,
+            clear_database
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

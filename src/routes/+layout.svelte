@@ -14,7 +14,7 @@
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen } from "@tauri-apps/api/event";
   import type { Payload, Game } from "$lib/util";
-  import { set_history, update_history, history } from "$lib";
+  import { set_history, update_history } from "$lib";
   import Titlebar from "$lib/titlebar.svelte";
 
   let spanClass = "flex-1 ml-3 whitespace-nowrap";
@@ -34,7 +34,7 @@
 
   async function fetch_data() {
     try {
-      const data = await invoke<Game[]>("fetch_data", { page: 1, limit: 10 });
+      const data = await invoke<Game[]>("fetch_data", { page: 1, limit: 50 });
 
       if (data) {
         set_history(data);
@@ -103,12 +103,13 @@
               />
             </svg>
           </svelte:fragment>
-          <svelte:fragment slot="subtext">
+          <!-- Could be used in the future -->
+          <!-- <svelte:fragment slot="subtext">
             <span
               class="inline-flex justify-center items-center p-3 ml-3 w-3 h-3 text-sm font-medium text-primary-600 bg-primary-200 rounded-full dark:bg-primary-900 dark:text-primary-200"
               >{$history.length}</span
             >
-          </svelte:fragment>
+          </svelte:fragment> -->
         </SidebarItem>
         <SidebarItem
           label="Stats"
