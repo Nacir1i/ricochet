@@ -161,7 +161,7 @@ fn main() {
                 .expect("[Main]::Database initialize should succeed");
 
             let settings = database::get_settings(&db).unwrap_or(database::Settings {
-                directory_path: "/home/linuxlolrandomxd/Desktop/lmao".to_owned(),
+                directory_path: "C:/Program Files (x86)/Steam/SteamApps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/scenarios".to_owned(),
             });
 
             let start = std::time::Instant::now();
