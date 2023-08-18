@@ -41,3 +41,11 @@ export interface Data {
   key_value: string[];
   stats: string;
 }
+
+export interface Scenario {
+  id: number;
+  name: string;
+  difficulty: string;
+  created_at: string;
+  games_count: number;
+}

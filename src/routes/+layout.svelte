@@ -13,8 +13,8 @@
   import { page } from "$app/stores";
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen } from "@tauri-apps/api/event";
-  import type { Payload, Game } from "$lib/util";
-  import { set_history, update_history } from "$lib";
+  import type { Payload, Game, Scenario } from "$lib/util";
+  import { set_history, set_scenarios, update_history } from "$lib";
   import Titlebar from "$lib/titlebar.svelte";
 
   let spanClass = "flex-1 ml-3 whitespace-nowrap";
@@ -47,9 +47,21 @@
       console.error(error);
     }
   }
+  async function fetchScenarios() {
+    try {
+      const data: Scenario[] = await invoke("fetch_scenarios");
+
+      if (data) {
+        set_scenarios(data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   eventListener();
   fetch_data();
+  fetchScenarios();
   $: activeUrl = $page.url.pathname;
 </script>
 

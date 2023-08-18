@@ -15,10 +15,14 @@
   }
 </script>
 
-<div>
+<div class="w-full h-full p-5">
   <h1>Settings</h1>
-  <button on:click={changeDirPath}>click</button>
-  <button on:click={async () => await invoke("clear_database")}
-    >clear database</button
+  <button
+    class="p-3 bg-gray-400 dark:bg-gray-600 rounded-md text-black dark:text-white"
+    on:click={changeDirPath}>Update patch</button
+  >
+  <button
+    class="p-3 bg-red-700 rounded-md text-white"
+    on:click={async () => await invoke("clear_database")}>Clear database</button
   >
 </div>
