@@ -17,7 +17,8 @@ pub struct Scenario {
     pub id: u64,
     pub name: String,
     pub difficulty: String,
-    pub create_at: String,
+    pub created_at: String,
+    pub games_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,7 +27,7 @@ pub struct Game {
     pub name: String,
     pub hash: i64,
     pub scenario_id: u64,
-    pub create_at: String,
+    pub created_at: String,
 }
 
 const CURRENT_DB_VERSION: u32 = 4;
@@ -225,7 +226,7 @@ fn game_exists(hash: i64, db: &Connection) -> Result<bool, rusqlite::Error> {
             hash: row.get(1)?,
             scenario_id: row.get(2)?,
             name: row.get(3)?,
-            create_at: row.get(4)?,
+            created_at: row.get(4)?,
         })
     });
 
@@ -242,7 +243,8 @@ fn scenario_exists(name: &String, db: &Connection) -> Result<Option<Scenario>, r
             id: row.get(0)?,
             name: row.get(1)?,
             difficulty: row.get(2)?,
-            create_at: row.get(3)?,
+            created_at: row.get(3)?,
+            games_count: 0,
         })
     });
 
@@ -484,7 +486,7 @@ pub fn fetch_game_page(page: u8, limit: u8, db: &Connection) -> Result<Vec<Data>
             hash: row.get(1)?,
             scenario_id: row.get(2)?,
             name: row.get(3)?,
-            create_at: row.get(4)?,
+            created_at: row.get(4)?,
         };
 
         let key_value = fetch_key_value(game.id, db)?;
@@ -519,7 +521,7 @@ pub fn fetch_gamed_with_scenario_id(
             hash: row.get(1)?,
             scenario_id: row.get(2)?,
             name: row.get(3)?,
-            create_at: row.get(4)?,
+            created_at: row.get(4)?,
         };
 
         let key_value = fetch_key_value(game.id, db)?;
@@ -541,7 +543,7 @@ pub fn fetch_gamed_with_scenario_id(
 pub fn fetch_scenarios(db: &Connection) -> Result<Vec<Scenario>, rusqlite::Error> {
     let mut vec: Vec<Scenario> = Vec::new();
 
-    let query = "SELECT * FROM scenarios";
+    let query = "SELECT s.*, COUNT(g.id) AS game_count FROM scenario AS s LEFT JOIN game AS g ON s.id = g.scenario_id GROUP BY s.id, s.name, s.difficulty ORDER BY s.id;";
     let mut statement = db.prepare(query)?;
     let mut rows = statement.query([])?;
 
@@ -550,7 +552,8 @@ pub fn fetch_scenarios(db: &Connection) -> Result<Vec<Scenario>, rusqlite::Error
             id: row.get(0)?,
             name: row.get(1)?,
             difficulty: row.get(2)?,
-            create_at: row.get(3)?,
+            created_at: row.get(3)?,
+            games_count: row.get(4)?,
         };
 
         vec.push(scenario)
@@ -570,7 +573,8 @@ pub fn fetch_scenarios_games(
             id: row.get(0)?,
             name: row.get(1)?,
             difficulty: row.get(2)?,
-            create_at: row.get(3)?,
+            created_at: row.get(3)?,
+            games_count: 0,
         })
     });
 
