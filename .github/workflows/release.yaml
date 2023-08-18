@@ -1,6 +1,8 @@
 name: "publish"
 on:
   push:
+    branches:
+      - release
     tags:
       - "v*"
   workflow_dispatch:
@@ -34,6 +36,14 @@ jobs:
         with:
           node-version: 18
 
+      - name: Pnpm setup
+        uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 6.0
+          run_install: false
+
       - name: Install Rust (Stable)
         run: curl https://sh.rustup.rs -sSf | sh -s -- -y
 
@@ -46,14 +56,14 @@ jobs:
       - name: Install app dependencies from lockfile and build web
         run: yarn install --frozen-lockfile && yarn build
 
-      - name: Build the app
+      - name: Build and release the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
+          tagName: v__VERSION__
           releaseName: "New release of RICOCHET App v__VERSION__"
           releaseBody: |
             ${{steps.build_changelog.outputs.changelog}}
