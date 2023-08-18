@@ -1,48 +1,62 @@
 name: "publish"
 on:
   push:
-    branches:
-      - release
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 jobs:
-  publish-tauri:
-    permissions:
-      contents: write
+  release:
     strategy:
       fail-fast: false
-
-    runs-on: windows-latest
+      matrix:
+        platform: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            rust_target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            rust_target: x86_64-apple-darwin
+          - os: macos-latest
+            rust_target: aarch64-apple-darwin
+          - os: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Node.js
+      - name: Build Changelog
+        id: build_changelog
+        run: echo "changelog=- ADD CHANGELOG" >> $GITHUB_OUTPUT
+
+      - name: Node.js setup
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
 
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          version: 6.0
-          run_install: false
+      - name: Install Rust (Stable)
+        run: curl https://sh.rustup.rs -sSf | sh -s -- -y
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
 
-      - name: install frontend dependencies
-        run: pnpm install
+      - name: Install app dependencies from lockfile and build web
+        run: yarn install --frozen-lockfile && yarn build
 
-      - name: Build and release app
+      - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          tagName: v__VERSION__
-          releaseName: "v__VERSION__"
-          releaseBody: "See the assets to download this version and install."
+          tagName: ${{ github.ref_name }}
+          releaseName: "New release of RICOCHET App v__VERSION__"
+          releaseBody: |
+            ${{steps.build_changelog.outputs.changelog}}
+            See the assets to download this version and install.
           releaseDraft: true
           prerelease: false
