@@ -40,17 +40,22 @@ pub fn file_watcher_thread(path: &String) -> Sender<PathBuf> {
 
     println!("[File_watcher]::File watcher initiated");
 
-    watcher
-        .watch(&initial_path, RecursiveMode::NonRecursive)
-        .unwrap();
+    match watcher.watch(&initial_path, RecursiveMode::NonRecursive) {
+        Ok(notify_watcher) => notify_watcher,
+        Err(err) => eprintln!("[File_watcher]::Error : {}", err),
+    };
 
     std::thread::spawn(move || loop {
         if let Ok(new_path) = receiver.recv() {
             println!("[File_watcher]::updating path to: {:?}", new_path);
-            watcher.unwatch(&initial_path).unwrap();
-            watcher
-                .watch(&new_path, RecursiveMode::NonRecursive)
-                .unwrap();
+            match watcher.watch(&initial_path, RecursiveMode::NonRecursive) {
+                Ok(notify_watcher) => notify_watcher,
+                Err(err) => eprintln!("[File_watcher]::Unwatch Error : {}", err),
+            };
+            match watcher.watch(&new_path, RecursiveMode::NonRecursive) {
+                Ok(notify_watcher) => notify_watcher,
+                Err(err) => eprintln!("[File_watcher]::New watch Error : {}", err),
+            };
         }
     });
 

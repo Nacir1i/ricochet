@@ -30,7 +30,7 @@ pub struct Game {
     pub created_at: String,
 }
 
-const CURRENT_DB_VERSION: u32 = 4;
+const CURRENT_DB_VERSION: u32 = 6;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -142,8 +142,8 @@ pub fn upgrade_database_if_needed(
                     playlist_id INTEGER NOT NULL,
                     reps INTEGER NOT NULL,
                     created_at date DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(scenario_id) REFERENCES scenario(id),
-                    FOREIGN KEY(playlist_id) REFERENCES playlist(id)
+                    FOREIGN KEY(scenario_id) REFERENCES scenario(id) ON DELETE CASCADE,
+                    FOREIGN KEY(playlist_id) REFERENCES playlist(id) ON DELETE CASCADE
                 );
 
                 CREATE TABLE playlist (
@@ -159,8 +159,8 @@ pub fn upgrade_database_if_needed(
                     playlist_collection_id INTEGER NOT NULL,
                     reps INTEGER NOT NULL,
                     created_at date DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(playlist_id) REFERENCES playlist(id),
-                    FOREIGN KEY(playlist_collection_id) REFERENCES playlist_collection(id)
+                    FOREIGN KEY(playlist_id) REFERENCES playlist(id) ON DELETE CASCADE,
+                    FOREIGN KEY(playlist_collection_id) REFERENCES playlist_collection(id) ON DELETE CASCADE
                 );
 
                 CREATE TABLE playlist_collection (

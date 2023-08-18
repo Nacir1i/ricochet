@@ -4,6 +4,8 @@ use std::hash::{Hash, Hasher};
 use std::mem::size_of;
 use std::path::PathBuf;
 
+use crate::emit_tauri_event;
+
 #[derive(Clone, Debug, Serialize, Deserialize, Hash)]
 pub struct Data {
     pub tiles: Vec<TilesRecords>,
@@ -150,34 +152,55 @@ pub fn read_file(
 pub fn read_existing_files(path: &String) -> Vec<Data> {
     let mut data_vec = Vec::new();
     let dir_path = path.to_owned();
-    let dir_entries = std::fs::read_dir(dir_path).unwrap();
+    let dir_entries = std::fs::read_dir(dir_path);
 
-    for file in dir_entries {
-        match file {
-            Ok(file_entry) => {
-                if let Ok((tiles, key_value, stats)) = read_file(&file_entry.path()) {
-                    let data = Data {
-                        tiles,
-                        key_value,
-                        stats,
-                    };
+    match dir_entries {
+        Ok(dir) => {
+            for file in dir {
+                match file {
+                    Ok(file_entry) => {
+                        if let Ok((tiles, key_value, stats)) = read_file(&file_entry.path()) {
+                            let data = Data {
+                                tiles,
+                                key_value,
+                                stats,
+                            };
 
-                    let data_size = size_of::<Data>()
-                        + size_of::<TilesRecords>() * data.tiles.len()
-                        + size_of::<KeyValueRecord>() * data.key_value.len()
-                        + size_of::<Stats>()
-                        + size_of::<Timestamp>() * data.tiles.len();
+                            let data_size = size_of::<Data>()
+                                + size_of::<TilesRecords>() * data.tiles.len()
+                                + size_of::<KeyValueRecord>() * data.key_value.len()
+                                + size_of::<Stats>()
+                                + size_of::<Timestamp>() * data.tiles.len();
 
-                    data_vec.push(data);
+                            data_vec.push(data);
 
-                    println!("Estimated size of Data struct: {} bytes", data_size);
-                } else {
-                    eprintln!("[File_reader]::Error reading file: {:?}", file_entry.path());
+                            println!("Estimated size of Data struct: {} bytes", data_size);
+                        } else {
+                            eprintln!("[File_reader]::Error reading file: {:?}", file_entry.path());
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("[File_reader]::Error reading directory entry: {}", err);
+                    }
                 }
             }
-            Err(err) => {
-                eprintln!("[File_reader]::Error reading directory entry: {}", err);
-            }
+        }
+        Err(err) => {
+            emit_tauri_event(
+                Data {
+                    tiles: Vec::new(),
+                    key_value: Vec::new(),
+                    stats: Stats {
+                        weapon: "0".to_owned(),
+                        shots: 0,
+                        hits: 0,
+                        damage_done: 0.6,
+                        damage_possible: 0.6,
+                    },
+                },
+                "folder_not_found",
+            );
+            eprintln!("[File_reader]::Error reading directory entry: {}", err)
         }
     }
 

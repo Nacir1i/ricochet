@@ -161,7 +161,7 @@ fn main() {
                 .expect("[Main]::Database initialize should succeed");
 
             let settings = database::get_settings(&db).unwrap_or(database::Settings {
-                directory_path: "/home/linuxlolrandomxd/Desktop/test".to_owned(),
+                directory_path: "/home/linuxlolrandomxd/Desktop/lmao".to_owned(),
             });
 
             let start = std::time::Instant::now();
