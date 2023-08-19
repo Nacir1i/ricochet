@@ -14,12 +14,6 @@ use tauri::{AppHandle, Manager, State, Window};
 
 static WINDOW: OnceLock<Window> = OnceLock::new();
 
-#[derive(Clone, serde::Serialize)]
-struct Payload {
-    message: String,
-    data: file_reader::Data,
-}
-
 // TODO: future common error solution
 // pub type CommonResult<T> = std::result::Result<T, CommonError>;
 
@@ -54,18 +48,26 @@ struct Payload {
 //     }
 // }
 
-fn emit_tauri_event(data: file_reader::Data, event: &str) {
+#[derive(Clone, serde::Serialize)]
+pub struct Payload<T> {
+    message: String,
+    data: T,
+}
+
+pub enum TauriEvent {
+    NewRun(Payload<Data>),
+    Error(Payload<String>),
+    Info(Payload<String>),
+}
+
+fn emit_tauri_event(event: TauriEvent) {
     let window = WINDOW.get().expect("Window is not available");
 
-    window
-        .emit(
-            event,
-            Payload {
-                message: "event sent".to_owned(),
-                data,
-            },
-        )
-        .unwrap()
+    match event {
+        TauriEvent::NewRun(payload) => window.emit("new_run", payload).unwrap(),
+        TauriEvent::Error(payload) => window.emit("error", payload).unwrap(),
+        TauriEvent::Info(payload) => window.emit("info", payload).unwrap(),
+    };
 }
 
 #[tauri::command]
@@ -160,9 +162,7 @@ fn main() {
             let mut db = database::initialize_database(&handle)
                 .expect("[Main]::Database initialize should succeed");
 
-            let settings = database::get_settings(&db).unwrap_or(database::Settings {
-                directory_path: "C:/Program Files (x86)/Steam/SteamApps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/scenarios".to_owned(),
-            });
+            let settings = database::get_settings(&db).unwrap();
 
             let start = std::time::Instant::now();
             let data_vec = file_reader::read_existing_files(&settings.directory_path);
@@ -176,7 +176,13 @@ fn main() {
             for data in data_vec {
                 match database::insert_game(&data, &mut db) {
                     Ok(()) => println!("[Main]::Game saved successfully:"),
-                    Err(err) => println!("[Main]::Error while saving game: {:?}", err),
+                    Err(err) => {
+                        emit_tauri_event(TauriEvent::Error(Payload {
+                            message: "Error while saving a game".to_owned(),
+                            data: err.to_string(),
+                        }));
+                        println!("[Main]::Error while saving game: {:?}", err)
+                    }
                 }
             }
             println!(
