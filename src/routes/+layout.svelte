@@ -13,7 +13,7 @@
   import { page } from "$app/stores";
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen } from "@tauri-apps/api/event";
-  import type { Payload, Game, Scenario } from "$lib/util";
+  import type { Payload, Game, Scenario, MessagePayload } from "$lib/util";
   import { set_history, set_scenarios, update_history } from "$lib";
   import Titlebar from "$lib/titlebar.svelte";
   import {
@@ -24,6 +24,8 @@
     User2,
     Settings,
   } from "lucide-svelte";
+  import { notifications } from "$lib/notification";
+  import Toast from "$lib/Toast.svelte";
 
   let spanClass = "flex-1 ml-3 whitespace-nowrap";
   let site = {
@@ -32,11 +34,30 @@
     img: logo,
   };
 
-  async function eventListener() {
+  async function newRunListener() {
     await listen("new_run", (event) => {
       const payload = event.payload as Payload;
 
       update_history(payload.data);
+
+      console.log("new run", payload);
+      notifications.success("Run saved", 2000);
+    });
+  }
+
+  async function errorListener() {
+    await listen("error", (event) => {
+      const payload = event.payload as MessagePayload;
+
+      notifications.danger(payload.data, 2000);
+    });
+  }
+
+  async function infoListener() {
+    await listen("info", (event) => {
+      const payload = event.payload as MessagePayload;
+
+      notifications.info(payload.data, 2000);
     });
   }
 
@@ -67,7 +88,9 @@
     }
   }
 
-  eventListener();
+  newRunListener();
+  errorListener();
+  infoListener();
   fetch_data();
   fetchScenarios();
   $: activeUrl = $page.url.pathname;
@@ -155,4 +178,5 @@
     </SidebarWrapper>
   </Sidebar>
   <slot />
+  <Toast />
 </body>
