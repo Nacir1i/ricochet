@@ -36,6 +36,18 @@ export interface Payload {
   data: Game;
 }
 
+export interface MessagePayload {
+  message: string;
+  data: string;
+}
+
+export interface Notification {
+  id: string;
+  message: string;
+  type: string;
+  timeout: number;
+}
+
 export interface Data {
   tiles: string[];
   key_value: string[];
