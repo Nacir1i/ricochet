@@ -30,6 +30,7 @@
     "@tauri-apps/api": "^1.4.0",
     "flowbite": "^1.7.0",
     "flowbite-svelte": "^0.39.2",
+    "lucide-svelte": "^0.268.0",
     "tailwind-merge": "^1.13.2"
   }
 }

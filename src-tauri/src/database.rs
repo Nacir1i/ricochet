@@ -6,6 +6,7 @@ use std::{collections::hash_map::DefaultHasher, hash::Hasher};
 use tauri::AppHandle;
 
 use crate::file_reader::{Data, KeyValueRecord, Stats, TilesRecords};
+use crate::{emit_tauri_event, Payload};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
@@ -30,7 +31,7 @@ pub struct Game {
     pub created_at: String,
 }
 
-const CURRENT_DB_VERSION: u32 = 1;
+const CURRENT_DB_VERSION: u32 = 7;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -174,6 +175,8 @@ pub fn upgrade_database_if_needed(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     directory_path TEXT NOT NULL
                 );
+
+                INSERT INTO setting (directory_path) values ('C:/Program Files (x86)/Steam/SteamApps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/scenarios');
             ",
         )?;
 
@@ -213,6 +216,11 @@ pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqli
     statement.execute(named_params! { "@directory_path": settings.directory_path })?;
 
     println!("[Database]::Update settings : {:?}", settings);
+
+    emit_tauri_event(crate::TauriEvent::Info(Payload {
+        message: "Settings updated".to_owned(),
+        data: "Settings updated successfully".to_owned(),
+    }));
 
     Ok(())
 }
@@ -404,6 +412,11 @@ pub fn clear_database(db: &mut Connection) -> Result<(), rusqlite::Error> {
 
     let _ = tx.execute_batch(query);
     let _ = tx.commit();
+
+    emit_tauri_event(crate::TauriEvent::Info(Payload {
+        message: "".to_owned(),
+        data: "Database cleared successfully".to_owned(),
+    }));
 
     Ok(())
 }

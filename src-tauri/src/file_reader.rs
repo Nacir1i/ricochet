@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 use std::mem::size_of;
 use std::path::PathBuf;
 
-use crate::emit_tauri_event;
+use crate::{emit_tauri_event, Payload, TauriEvent};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Hash)]
 pub struct Data {
@@ -176,30 +176,28 @@ pub fn read_existing_files(path: &String) -> Vec<Data> {
 
                             println!("Estimated size of Data struct: {} bytes", data_size);
                         } else {
+                            emit_tauri_event(TauriEvent::Error(Payload {
+                                message: "Error while parsing the file".to_owned(),
+                                data: "".to_owned(),
+                            }));
                             eprintln!("[File_reader]::Error reading file: {:?}", file_entry.path());
                         }
                     }
                     Err(err) => {
+                        emit_tauri_event(TauriEvent::Error(Payload {
+                            message: "Error while reading the file".to_owned(),
+                            data: err.to_string(),
+                        }));
                         eprintln!("[File_reader]::Error reading directory entry: {}", err);
                     }
                 }
             }
         }
         Err(err) => {
-            emit_tauri_event(
-                Data {
-                    tiles: Vec::new(),
-                    key_value: Vec::new(),
-                    stats: Stats {
-                        weapon: "0".to_owned(),
-                        shots: 0,
-                        hits: 0,
-                        damage_done: 0.6,
-                        damage_possible: 0.6,
-                    },
-                },
-                "folder_not_found",
-            );
+            emit_tauri_event(TauriEvent::Error(Payload {
+                message: "Folder was not found".to_owned(),
+                data: err.to_string(),
+            }));
             eprintln!("[File_reader]::Error reading directory entry: {}", err)
         }
     }
