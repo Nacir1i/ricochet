@@ -19,7 +19,7 @@
   <h1>Settings</h1>
   <button
     class="p-3 bg-gray-400 dark:bg-gray-600 rounded-md text-black dark:text-white"
-    on:click={changeDirPath}>Update patch</button
+    on:click={changeDirPath}>Update path</button
   >
   <button
     class="p-3 bg-red-700 rounded-md text-white"

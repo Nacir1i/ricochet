@@ -45,6 +45,11 @@ pub fn file_watcher_thread(path: &String) {
 
         for event in receiver {
             if let Ok(event) = event {
+                emit_tauri_event(crate::TauriEvent::Info(Payload {
+                    message: "New file event".to_owned(),
+                    data: "New file event".to_owned(),
+                }));
+
                 match event.kind {
                     notify::event::EventKind::Create(CreateKind::File) => {
                         match read_file(&event.paths.as_slice()[0]) {
