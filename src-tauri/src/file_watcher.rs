@@ -51,7 +51,7 @@ pub fn file_watcher_thread(path: &String) {
                 }));
 
                 match event.kind {
-                    notify::event::EventKind::Create(CreateKind::File) => {
+                    EventKind::Create(CreateKind::File) => {
                         match read_file(&event.paths.as_slice()[0]) {
                             Ok((tiles, key_value, stats)) => {
                                 let data = Data {
@@ -72,6 +72,36 @@ pub fn file_watcher_thread(path: &String) {
                                 eprintln!("[File_watcher]::Error reading file: {}", err);
                             }
                         }
+                    }
+                    EventKind::Any => {
+                        emit_tauri_event(crate::TauriEvent::Info(Payload {
+                            message: "New file event".to_owned(),
+                            data: "Any event".to_owned(),
+                        }));
+                    }
+                    EventKind::Access(_) => {
+                        emit_tauri_event(crate::TauriEvent::Info(Payload {
+                            message: "New file event".to_owned(),
+                            data: "Access event".to_owned(),
+                        }));
+                    }
+                    EventKind::Modify(_) => {
+                        emit_tauri_event(crate::TauriEvent::Info(Payload {
+                            message: "New file event".to_owned(),
+                            data: "Modify event".to_owned(),
+                        }));
+                    }
+                    EventKind::Remove(_) => {
+                        emit_tauri_event(crate::TauriEvent::Info(Payload {
+                            message: "New file event".to_owned(),
+                            data: "Remove event".to_owned(),
+                        }));
+                    }
+                    EventKind::Other => {
+                        emit_tauri_event(crate::TauriEvent::Info(Payload {
+                            message: "New file event".to_owned(),
+                            data: "Other event".to_owned(),
+                        }));
                     }
                     _ => (),
                 }
