@@ -1,5 +1,5 @@
 use notify::{event::CreateKind, *};
-use std::{ffi::OsStr, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::{
     emit_tauri_event,
@@ -73,14 +73,4 @@ pub fn file_watcher_thread(path: &String) {
             }
         }
     });
-}
-
-fn is_csv_file(file_name: &PathBuf) -> bool {
-    let file_extension = file_name.extension().and_then(OsStr::to_str);
-
-    if file_name.is_file() && file_extension == Some("csv") {
-        return true;
-    }
-
-    false
 }
