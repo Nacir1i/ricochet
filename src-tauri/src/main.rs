@@ -8,8 +8,8 @@ mod state;
 use database::Scenario;
 use file_reader::Data;
 use state::{AppState, ServiceAccess};
+use std::env;
 use std::sync::{Mutex, OnceLock};
-use std::{env, path::PathBuf};
 use tauri::{AppHandle, Manager, State, Window};
 
 static WINDOW: OnceLock<Window> = OnceLock::new();
@@ -140,10 +140,6 @@ fn update_dir_path(path: String, app_handle: AppHandle) {
             )
         })
         .unwrap();
-
-    app_handle.file_watcher_handler(|file_watcher| {
-        let _ = file_watcher.send(PathBuf::from(path));
-    })
 }
 
 fn main() {
@@ -190,12 +186,9 @@ fn main() {
                 start.elapsed()
             );
 
-            let file_watcher_handler = file_watcher::file_watcher_thread(&settings.directory_path);
-
-            let mut file_watcher = app_state.file_watcher_handler.lock().unwrap();
+            file_watcher::file_watcher_thread(&settings.directory_path);
 
             *app_state.db.lock().unwrap() = Some(db);
-            *file_watcher = Some(file_watcher_handler);
 
             Ok(())
         })

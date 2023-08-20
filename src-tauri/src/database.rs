@@ -31,7 +31,7 @@ pub struct Game {
     pub created_at: String,
 }
 
-const CURRENT_DB_VERSION: u32 = 7;
+const CURRENT_DB_VERSION: u32 = 1;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
