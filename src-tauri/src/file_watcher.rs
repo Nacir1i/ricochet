@@ -47,9 +47,6 @@ pub fn file_watcher_thread(path: &String) {
             if let Ok(event) = event {
                 match event.kind {
                     notify::event::EventKind::Create(CreateKind::File) => {
-                        if !is_csv_file(&event.paths.as_slice()[0]) {
-                            return;
-                        };
                         match read_file(&event.paths.as_slice()[0]) {
                             Ok((tiles, key_value, stats)) => {
                                 let data = Data {
