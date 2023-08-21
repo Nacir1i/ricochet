@@ -1,5 +1,4 @@
 use notify::{event::CreateKind, *};
-use std::path::PathBuf;
 
 use crate::{
     emit_tauri_event,
@@ -10,7 +9,7 @@ use crate::{
 pub fn file_watcher_thread(path: &String) {
     let (sender, receiver) = std::sync::mpsc::channel();
 
-    let initial_path = PathBuf::from(path);
+    let initial_path = std::path::PathBuf::from(path);
 
     println!("{}", initial_path.display());
 
@@ -45,13 +44,14 @@ pub fn file_watcher_thread(path: &String) {
 
         for event in receiver {
             if let Ok(event) = event {
-                emit_tauri_event(crate::TauriEvent::Info(Payload {
-                    message: "New file event".to_owned(),
-                    data: "New file event".to_owned(),
-                }));
+                println!("event kind: {:?}", event.kind);
 
+                if !is_valid_file(&event.paths.as_slice()[0]) {
+                    return;
+                }
+                
                 match event.kind {
-                    EventKind::Create(CreateKind::File) => {
+                    EventKind::Create(CreateKind::Any) => {
                         match read_file(&event.paths.as_slice()[0]) {
                             Ok((tiles, key_value, stats)) => {
                                 let data = Data {
@@ -73,39 +73,19 @@ pub fn file_watcher_thread(path: &String) {
                             }
                         }
                     }
-                    EventKind::Any => {
-                        emit_tauri_event(crate::TauriEvent::Info(Payload {
-                            message: "New file event".to_owned(),
-                            data: "Any event".to_owned(),
-                        }));
-                    }
-                    EventKind::Access(_) => {
-                        emit_tauri_event(crate::TauriEvent::Info(Payload {
-                            message: "New file event".to_owned(),
-                            data: "Access event".to_owned(),
-                        }));
-                    }
-                    EventKind::Modify(_) => {
-                        emit_tauri_event(crate::TauriEvent::Info(Payload {
-                            message: "New file event".to_owned(),
-                            data: "Modify event".to_owned(),
-                        }));
-                    }
-                    EventKind::Remove(_) => {
-                        emit_tauri_event(crate::TauriEvent::Info(Payload {
-                            message: "New file event".to_owned(),
-                            data: "Remove event".to_owned(),
-                        }));
-                    }
-                    EventKind::Other => {
-                        emit_tauri_event(crate::TauriEvent::Info(Payload {
-                            message: "New file event".to_owned(),
-                            data: "Other event".to_owned(),
-                        }));
-                    }
                     _ => (),
                 }
             }
         }
     });
+}
+
+fn is_valid_file(path: &std::path::PathBuf) -> bool {
+    let metadata = std::fs::metadata(path).unwrap();
+
+    if metadata.is_file() && path.extension().map(|s| s == "csv").unwrap_or(false) {
+        true
+    } else {
+        false
+    }
 }
