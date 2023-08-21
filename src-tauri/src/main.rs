@@ -5,7 +5,7 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
-use database::Scenario;
+use database::{Scenario, Settings};
 use file_reader::Data;
 use state::{AppState, ServiceAccess};
 use std::env;
@@ -121,6 +121,20 @@ fn fetch_scenarios_games(scenario_id: u64, app_handle: AppHandle) -> Vec<Data> {
 }
 
 #[tauri::command]
+fn fetch_settings(app_handle: AppHandle) -> Settings {
+    let mut settings: Option<Settings> = None;
+
+    app_handle.db(|db| {
+        match database::get_settings(db) {
+            Ok(fetched_settings) => settings = Some(fetched_settings),
+            Err(err) => eprintln!("[Main]::fetch settings Error : {}", err),
+        };
+    });
+
+    settings.unwrap()
+}
+
+#[tauri::command]
 fn clear_database(app_handle: AppHandle) {
     match app_handle.db_mut(|mut db| database::clear_database(&mut db)) {
         Ok(()) => println!("[Main]::clear_database was successful"),
@@ -198,7 +212,8 @@ fn main() {
             clear_database,
             insert_game,
             fetch_scenarios,
-            fetch_scenarios_games
+            fetch_scenarios_games,
+            fetch_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

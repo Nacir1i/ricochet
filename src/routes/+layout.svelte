@@ -163,11 +163,6 @@
             <Settings class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem label="Theme">
-          <svelte:fragment slot="icon">
-            <DarkMode btnClass="p-1" />
-          </svelte:fragment>
-        </SidebarItem>
         <SidebarCta label="Beta">
           <svelte:fragment slot="icon" />
           <p class="mb-3 text-sm text-primary-900 dark:text-primary-400">

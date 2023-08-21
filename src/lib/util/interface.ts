@@ -61,3 +61,8 @@ export interface Scenario {
   created_at: string;
   games_count: number;
 }
+
+export interface Settings {
+  id: number;
+  directory_path?: string;
+}
