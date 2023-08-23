@@ -9,7 +9,7 @@
     SidebarBrand,
     DarkMode,
   } from "flowbite-svelte";
-  import logo from "$lib/asset/dev_logo.jpg";
+  import logo from "$lib/asset/app-icon.png";
   import { page } from "$app/stores";
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen } from "@tauri-apps/api/event";
