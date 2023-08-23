@@ -5,7 +5,7 @@
 
 <div
   data-tauri-drag-region
-  class="h-7 dark:bg-gray-900 bg-gray-300 select-none flex justify-end fixed top-0 left-0 right-0"
+  class="h-7 dark:bg-gray-900 bg-gray-300 select-none flex justify-end fixed top-0 left-0 right-0 z-50"
 >
   <DarkMode btnClass="p-1 dark:text-white" />
   <!-- svelte-ignore a11y-no-static-element-interactions -->

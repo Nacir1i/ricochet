@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::hash::{Hash, Hasher};
-use std::mem::size_of;
 use std::path::PathBuf;
 
 use crate::{emit_tauri_event, Payload, TauriEvent};
@@ -166,15 +165,7 @@ pub fn read_existing_files(path: &String) -> Vec<Data> {
                                 stats,
                             };
 
-                            let data_size = size_of::<Data>()
-                                + size_of::<TilesRecords>() * data.tiles.len()
-                                + size_of::<KeyValueRecord>() * data.key_value.len()
-                                + size_of::<Stats>()
-                                + size_of::<Timestamp>() * data.tiles.len();
-
                             data_vec.push(data);
-
-                            println!("Estimated size of Data struct: {} bytes", data_size);
                         } else {
                             emit_tauri_event(TauriEvent::Error(Payload {
                                 message: "Error while parsing the file".to_owned(),
