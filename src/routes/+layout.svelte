@@ -49,7 +49,7 @@
     await listen("error", (event) => {
       const payload = event.payload as MessagePayload;
 
-      notifications.danger(payload.data, 2000);
+      notifications.danger(payload.data, 3000);
     });
   }
 
@@ -58,6 +58,14 @@
       const payload = event.payload as MessagePayload;
 
       notifications.info(payload.data, 2000);
+    });
+  }
+
+  async function warningListener() {
+    await listen("warning", (event) => {
+      const payload = event.payload as MessagePayload;
+
+      notifications.warning(payload.data, 4000);
     });
   }
 
@@ -91,6 +99,7 @@
   newRunListener();
   errorListener();
   infoListener();
+  warningListener();
   fetch_data();
   fetchScenarios();
   $: activeUrl = $page.url.pathname;
