@@ -8,7 +8,7 @@
 <div
   class="relative w-full h-full p-3 flex flex-wrap gap-3 content-start overflow-scroll"
 >
-  <div class="fixed top-10 right-5 flex flex-col items-end gap-2">
+  <div class="fixed top-10 right-5 flex flex-col items-end gap-[6px]">
     <button
       id="dropdownDefault"
       class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
@@ -36,8 +36,8 @@
     <div
       id="dropdown"
       class={hidden
-        ? "z-10 hidden w-64 p-3 bg-white rounded-lg shadow dark:bg-gray-700"
-        : "z-10 w-64 p-3 bg-white rounded-lg shadow dark:bg-gray-700"}
+        ? "z-10 hidden w-64 max-h-[25rem] p-3 bg-white rounded-lg shadow dark:bg-gray-700 overflow-scroll"
+        : "z-10 w-64 max-h-[25rem] p-3 bg-white rounded-lg shadow dark:bg-gray-700 overflow-scroll"}
     >
       <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
         Scenarios :

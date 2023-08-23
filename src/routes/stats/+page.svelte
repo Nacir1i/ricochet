@@ -46,7 +46,7 @@
   const stats = fetch_stats();
 </script>
 
-<div class="w-full p-5">
+<div class="w-full p-5 overflow-scroll">
   {#await stats}
     <p>...loading</p>
   {:then stat}

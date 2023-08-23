@@ -22,7 +22,7 @@
   let settings = fetch_settings();
 </script>
 
-<div class="w-full h-full p-5 flex flex-col gap-6">
+<div class="w-full h-full p-5 flex flex-col gap-6 overflow-scroll">
   <h1>Settings</h1>
   {#await settings}
     <p>...loading</p>
