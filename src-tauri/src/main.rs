@@ -5,7 +5,7 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
-use database::{Scenario, Settings};
+use database::{Scenario, ScenarioChartStats, ScenarioGeneralStats, Settings};
 use file_reader::Data;
 use state::{AppState, ServiceAccess};
 use std::env;
@@ -58,6 +58,7 @@ pub enum TauriEvent {
     NewRun(Payload<Data>),
     Error(Payload<String>),
     Info(Payload<String>),
+    Warning(Payload<String>),
 }
 
 fn emit_tauri_event(event: TauriEvent) {
@@ -67,6 +68,7 @@ fn emit_tauri_event(event: TauriEvent) {
         TauriEvent::NewRun(payload) => window.emit("new_run", payload).unwrap(),
         TauriEvent::Error(payload) => window.emit("error", payload).unwrap(),
         TauriEvent::Info(payload) => window.emit("info", payload).unwrap(),
+        TauriEvent::Warning(payload) => window.emit("warning", payload).unwrap(),
     };
 }
 
@@ -126,12 +128,40 @@ fn fetch_settings(app_handle: AppHandle) -> Settings {
 
     app_handle.db(|db| {
         match database::get_settings(db) {
-            Ok(fetched_settings) => settings = Some(fetched_settings),
+            Ok(fetched_data) => settings = Some(fetched_data),
             Err(err) => eprintln!("[Main]::fetch settings Error : {}", err),
         };
     });
 
     settings.unwrap()
+}
+
+#[tauri::command]
+fn fetch_general_scenario_stats(app_handle: AppHandle) -> Vec<ScenarioGeneralStats> {
+    let mut data: Vec<ScenarioGeneralStats> = Vec::new();
+
+    app_handle.db(|db| {
+        match database::fetch_general_scenario_stats(db) {
+            Ok(fetched_data) => data = fetched_data,
+            Err(err) => eprintln!("[Main]::fetch general stats Error : {}", err),
+        };
+    });
+
+    data
+}
+
+#[tauri::command]
+fn fetch_chart_scenario_stats(app_handle: AppHandle) -> Vec<ScenarioChartStats> {
+    let mut data: Vec<ScenarioChartStats> = Vec::new();
+
+    app_handle.db(|db| {
+        match database::fetch_chart_scenario_stats(db) {
+            Ok(fetched_data) => data = fetched_data,
+            Err(err) => eprintln!("[Main]::fetch chart scenario Error : {}", err),
+        };
+    });
+
+    data
 }
 
 #[tauri::command]
@@ -185,7 +215,7 @@ fn main() {
             let start = std::time::Instant::now();
             for data in data_vec {
                 match database::insert_game(&data, &mut db) {
-                    Ok(()) => println!("[Main]::Game saved successfully:"),
+                    Ok(()) => {}
                     Err(err) => {
                         emit_tauri_event(TauriEvent::Error(Payload {
                             message: "Error while saving a game".to_owned(),
@@ -213,7 +243,9 @@ fn main() {
             insert_game,
             fetch_scenarios,
             fetch_scenarios_games,
-            fetch_settings
+            fetch_settings,
+            fetch_chart_scenario_stats,
+            fetch_general_scenario_stats
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

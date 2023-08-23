@@ -66,3 +66,34 @@ export interface Settings {
   id: number;
   directory_path?: string;
 }
+
+export interface GenericStats {
+  name: string;
+  games_count: number;
+  shots?: number;
+  hits?: number;
+  accuracy?: number;
+  damage_done?: number;
+  damage_possible?: number;
+}
+
+export interface DataChart {
+  date: string;
+  avg_accuracy?: number;
+}
+
+export interface ChartStats {
+  name: string;
+  data: DataChart[];
+}
+
+export interface FormattedChart {
+  name: string;
+  accuracyArray: number[];
+  dateArray: string[];
+}
+
+export interface Stat {
+  generic: GenericStats;
+  chart: FormattedChart;
+}

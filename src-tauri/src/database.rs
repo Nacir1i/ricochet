@@ -31,6 +31,29 @@ pub struct Game {
     pub created_at: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DailyScenarioData {
+    pub date: String,
+    pub avg_accuracy: Option<f64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScenarioChartStats {
+    pub name: String,
+    pub data: Vec<DailyScenarioData>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScenarioGeneralStats {
+    pub name: String,
+    pub games_count: u32,
+    pub shots: Option<f32>,
+    pub hits: Option<f32>,
+    pub accuracy: Option<f32>,
+    pub damage_done: Option<f32>,
+    pub damage_possible: Option<f32>,
+}
+
 const CURRENT_DB_VERSION: u32 = 1;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
@@ -217,9 +240,9 @@ pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqli
 
     println!("[Database]::Update settings : {:?}", settings);
 
-    emit_tauri_event(crate::TauriEvent::Info(Payload {
+    emit_tauri_event(crate::TauriEvent::Warning(Payload {
         message: "Settings updated".to_owned(),
-        data: "Settings updated successfully".to_owned(),
+        data: "App restart is needed".to_owned(),
     }));
 
     Ok(())
@@ -323,17 +346,11 @@ fn insert_game_data(data: &Data, game_id: i64, transaction: &Transaction) -> Res
 }
 
 pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Error> {
-    println!("------------------------------------");
     let hash = calculate_hash(&data);
-    println!("hash: {}", hash);
 
     match game_exists(hash, db) {
         Ok(exists) => {
-            if exists {
-                println!("[Database]::Game with hash '{}' exists.", hash);
-            } else {
-                println!("[Database]::Game with hash '{}' does not exist.", hash);
-
+            if !exists {
                 let key_value_vec = data
                     .key_value
                     .iter()
@@ -599,4 +616,92 @@ pub fn fetch_scenarios_games(
         }
         Err(err) => Err(err),
     }
+}
+
+pub fn fetch_general_scenario_stats(
+    db: &Connection,
+) -> Result<Vec<ScenarioGeneralStats>, rusqlite::Error> {
+    let mut vec: Vec<ScenarioGeneralStats> = Vec::new();
+
+    let query = "
+        SELECT s.name,
+            COUNT(g.id),
+            AVG(st.shots),
+            AVG(st.hits),
+            AVG(st.hits) / AVG(st.shots) * 100  AS accuracy,
+            AVG(st.damage_done),
+            AVG(st.damage_possible) 
+        FROM scenario s 
+        LEFT JOIN game g 
+        ON s.id = g.scenario_id 
+        LEFT JOIN stats st 
+        ON g.id = st.game_id 
+        GROUP BY s.id;
+    ";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([])?;
+
+    while let Some(row) = rows.next()? {
+        let scenario = ScenarioGeneralStats {
+            name: row.get(0)?,
+            games_count: row.get(1)?,
+            shots: row.get(2)?,
+            hits: row.get(3)?,
+            accuracy: row.get(4)?,
+            damage_done: row.get(5)?,
+            damage_possible: row.get(6)?,
+        };
+
+        vec.push(scenario)
+    }
+
+    Ok(vec)
+}
+
+pub fn fetch_chart_scenario_stats(
+    db: &Connection,
+) -> Result<Vec<ScenarioChartStats>, rusqlite::Error> {
+    let mut vec: Vec<ScenarioChartStats> = Vec::new();
+
+    let query = "
+        SELECT s.name,
+            STRFTIME('%d/%m/%Y', st.created_at),
+            AVG(st.hits) / AVG(st.shots) * 100 AS accuracy 
+        FROM scenario s 
+        LEFT JOIN game g 
+        ON s.id = g.scenario_id 
+        LEFT JOIN stats st 
+        ON g.id = st.game_id 
+        GROUP BY s.id, 
+            st.created_at;";
+    let mut statement = db.prepare(query)?;
+    let rows = statement.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, Option<f64>>(2)?,
+        ))
+    })?;
+
+    for result in rows {
+        let (name, date, avg_accuracy) = result?;
+        let daily_data = DailyScenarioData { date, avg_accuracy };
+
+        let existing_index = vec.iter().position(|stats| stats.name == name);
+
+        match existing_index {
+            Some(index) => {
+                vec[index].data.push(daily_data);
+            }
+            None => {
+                let new_stats = ScenarioChartStats {
+                    name: name.clone(),
+                    data: vec![daily_data],
+                };
+                vec.push(new_stats);
+            }
+        }
+    }
+
+    Ok(vec)
 }
