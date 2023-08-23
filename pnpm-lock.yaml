@@ -20,6 +20,9 @@ dependencies:
   lucide-svelte:
     specifier: ^0.268.0
     version: 0.268.0(svelte@4.0.5)
+  svelte-frappe-charts:
+    specifier: ^1.10.0
+    version: 1.10.0(svelte@4.0.5)
   tailwind-merge:
     specifier: ^1.13.2
     version: 1.13.2
@@ -831,6 +834,10 @@ packages:
     resolution: {integrity: sha512-MhLuK+2gUcnZe8ZHlaaINnQLl0xRIGRfcGk2yl8xoQAfHrSsL3rYu6FCmBdkdbhc9EPlwyGHewaRsvwRMJtAlA==}
     dev: true
 
+  /frappe-charts@1.6.2:
+    resolution: {integrity: sha512-9TC3/+YVUi84yYoEbxFiSqu+1FQ5If/ydUNj6i8FRpwynd08t6a7RkS+IRJozAk6NfdL8/LVTTE1DUOjjKZZxg==}
+    dev: false
+
   /fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
@@ -1371,6 +1378,15 @@ packages:
       - stylus
       - sugarss
     dev: true
+
+  /svelte-frappe-charts@1.10.0(svelte@4.0.5):
+    resolution: {integrity: sha512-TkkcovOAeoieiDFFJS7p56E91WcS5qFq5lpkF+yuCBMG17HaC+7PrkT/0zzii0BBnYlOuumsfb9S5UmsDZRhdg==}
+    peerDependencies:
+      svelte: ^3.0.0
+    dependencies:
+      frappe-charts: 1.6.2
+      svelte: 4.0.5
+    dev: false
 
   /svelte-hmr@0.15.2(svelte@4.0.5):
     resolution: {integrity: sha512-q/bAruCvFLwvNbeE1x3n37TYFb3mTBJ6TrCq6p2CoFbSTNhDE9oAtEfpy+wmc9So8AG0Tja+X0/mJzX9tSfvIg==}
