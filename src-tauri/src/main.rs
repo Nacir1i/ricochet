@@ -188,6 +188,9 @@ fn update_dir_path(path: String, app_handle: AppHandle) {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            println!("{}, {argv:?}, {cwd}", app.package_info().name);
+        }))
         .manage(AppState {
             db: Default::default(),
             file_watcher_handler: Mutex::new(None),

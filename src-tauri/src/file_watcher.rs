@@ -11,8 +11,6 @@ pub fn file_watcher_thread(path: &String) {
 
     let initial_path = std::path::PathBuf::from(path);
 
-    println!("{}", initial_path.display());
-
     std::thread::spawn(move || {
         let mut watcher: Box<dyn Watcher> = if RecommendedWatcher::kind()
             == WatcherKind::PollWatcher
@@ -44,12 +42,10 @@ pub fn file_watcher_thread(path: &String) {
 
         for event in receiver {
             if let Ok(event) = event {
-                println!("event kind: {:?}", event.kind);
-
                 if !is_valid_file(&event.paths.as_slice()[0]) {
                     return;
                 }
-                
+
                 match event.kind {
                     EventKind::Create(CreateKind::Any) => {
                         match read_file(&event.paths.as_slice()[0]) {
