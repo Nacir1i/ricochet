@@ -5,7 +5,7 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
-use database::{Scenario, ScenarioChartStats, ScenarioGeneralStats, Settings};
+use database::{InsertPlaylist, Scenario, ScenarioChartStats, ScenarioGeneralStats, Settings};
 use file_reader::Data;
 use state::{AppState, ServiceAccess};
 use std::env;
@@ -77,6 +77,14 @@ fn insert_game(data: Data, app_handle: AppHandle) {
     app_handle.db_mut(|db| match database::insert_game(&data, db) {
         Ok(()) => println!("[Main]::game saved"),
         Err(err) => eprintln!("[Main]::insert game Error : {:?}", err),
+    })
+}
+
+#[tauri::command]
+fn insert_playlist(data: InsertPlaylist, app_handle: AppHandle) {
+    app_handle.db_mut(|db| match database::insert_playlist(data, db) {
+        Ok(()) => println!("[Main]::playlist Saved"),
+        Err(err) => eprintln!("[Main]::insert playlist Error : {:?}", err),
     })
 }
 
@@ -248,7 +256,8 @@ fn main() {
             fetch_scenarios_games,
             fetch_settings,
             fetch_chart_scenario_stats,
-            fetch_general_scenario_stats
+            fetch_general_scenario_stats,
+            insert_playlist
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

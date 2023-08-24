@@ -54,6 +54,19 @@ pub struct ScenarioGeneralStats {
     pub damage_possible: Option<f32>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScenarioPlaylist {
+    pub scenario_id: u64,
+    pub reps: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InsertPlaylist {
+    pub name: String,
+    pub description: String,
+    pub scenarios: Vec<ScenarioPlaylist>,
+}
+
 const CURRENT_DB_VERSION: u32 = 1;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
@@ -711,4 +724,30 @@ pub fn fetch_chart_scenario_stats(
     }
 
     Ok(vec)
+}
+
+pub fn insert_playlist(
+    playlist_data: InsertPlaylist,
+    db: &mut Connection,
+) -> Result<(), rusqlite::Error> {
+    let transaction = db.transaction()?;
+
+    let query = "INSERT INTO playlist (name, description, duration) VALUES (?, ?, ?);";
+    transaction
+        .prepare(query)?
+        .execute(params![playlist_data.name, playlist_data.description])?;
+    let playlist_id = transaction.last_insert_rowid();
+
+    let query = "INSERT INTO scenario_playlist (scenario_id, playlist_id, reps) VALUES (?, ?, ?)";
+    for scenario_playlist in playlist_data.scenarios {
+        transaction.prepare(query)?.execute(params![
+            scenario_playlist.scenario_id,
+            playlist_id,
+            scenario_playlist.reps
+        ])?;
+    }
+
+    transaction.commit()?;
+
+    Ok(())
 }
