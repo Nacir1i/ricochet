@@ -675,7 +675,7 @@ pub fn fetch_chart_scenario_stats(
         LEFT JOIN stats st 
         ON g.id = st.game_id 
         GROUP BY s.id, 
-            st.created_at;";
+            DATE(st.created_at);";
     let mut statement = db.prepare(query)?;
     let rows = statement.query_map([], |row| {
         Ok((
