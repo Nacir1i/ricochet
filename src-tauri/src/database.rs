@@ -175,8 +175,8 @@ pub fn upgrade_database_if_needed(
                     name TEXT NOT NULL,
                     description TEXT NOT NULL,
                     duration INTEGER NOT NULL,
-                    started_at date DEFAULT DATE(CURRENT_TIMESTAMP, '+20 years'),
-                    ended_at date DEFAULT DATE(CURRENT_TIMESTAMP, '+22 years'),
+                    started_at date DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+20 years')),
+                    ended_at date DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+22 years')),
                     state TEXT DEFAULT 'INACTIVE' CHECK(state in ('ACTIVE', 'INACTIVE')),
                     created_at date DEFAULT CURRENT_TIMESTAMP
                 );
