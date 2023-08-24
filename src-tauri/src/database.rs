@@ -54,7 +54,7 @@ pub struct ScenarioGeneralStats {
     pub damage_possible: Option<f32>,
 }
 
-const CURRENT_DB_VERSION: u32 = 1;
+const CURRENT_DB_VERSION: u32 = 2;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -174,6 +174,8 @@ pub fn upgrade_database_if_needed(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
                     description TEXT NOT NULL,
+                    duration INTEGER NOT NULL,
+                    state TEXT DEFAULT 'ACTIVE' CHECK(state in ('ACTIVE', 'INACTIVE'))
                     created_at date DEFAULT CURRENT_TIMESTAMP
                 );
 
