@@ -54,7 +54,7 @@ pub struct ScenarioGeneralStats {
     pub damage_possible: Option<f32>,
 }
 
-const CURRENT_DB_VERSION: u32 = 2;
+const CURRENT_DB_VERSION: u32 = 1;
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
@@ -175,7 +175,9 @@ pub fn upgrade_database_if_needed(
                     name TEXT NOT NULL,
                     description TEXT NOT NULL,
                     duration INTEGER NOT NULL,
-                    state TEXT DEFAULT 'ACTIVE' CHECK(state in ('ACTIVE', 'INACTIVE'))
+                    started_at date DEFAULT DATE(CURRENT_TIMESTAMP, '+20 years'),
+                    ended_at date DEFAULT DATE(CURRENT_TIMESTAMP, '+22 years'),
+                    state TEXT DEFAULT 'INACTIVE' CHECK(state in ('ACTIVE', 'INACTIVE')),
                     created_at date DEFAULT CURRENT_TIMESTAMP
                 );
 
@@ -202,6 +204,16 @@ pub fn upgrade_database_if_needed(
                 );
 
                 INSERT INTO setting (directory_path) values ('C:/Program Files (x86)/Steam/SteamApps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/scenarios');
+
+                CREATE TRIGGER update_playlist_state 
+                AFTER UPDATE OF state ON playlist
+                BEGIN
+                    UPDATE playlist
+                    SET 
+                        started_at = CASE WHEN new.state = 'ACTIVE' THEN CURRENT_DATE ELSE started_at END,
+                        ended_at = CASE WHEN new.state = 'ACTIVE' THEN DATE(CURRENT_TIMESTAMP, '+22 years') ELSE CURRENT_DATE END
+                    WHERE id = new.id;
+                END;
             ",
         )?;
 
@@ -364,8 +376,6 @@ pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Err
 
                 match scenario_exists(scenario_name, db) {
                     Ok(Some(scenario)) => {
-                        println!("[Database]::Scenario with name '{}' exists.", scenario_name);
-
                         let transaction = db.transaction()?;
 
                         let query =
@@ -380,11 +390,6 @@ pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Err
                         transaction.commit()?;
                     }
                     Ok(None) => {
-                        println!(
-                            "[Database]::Scenario with name '{}' does not exists.",
-                            scenario_name
-                        );
-
                         let transaction = db.transaction()?;
 
                         let query = "INSERT INTO scenario (name, difficulty) VALUES (?, 'EASY')";
