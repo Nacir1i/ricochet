@@ -64,7 +64,43 @@ pub struct ScenarioPlaylist {
 pub struct InsertPlaylist {
     pub name: String,
     pub description: String,
+    pub duration: u8,
     pub scenarios: Vec<ScenarioPlaylist>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FetchedPlaylistData {
+    pub id: u64,
+    pub name: String,
+    pub description: String,
+    pub duration: u8,
+    pub scenario_name: String,
+    pub scenario_difficulty: String,
+    pub games_played: u8,
+    pub reps: u8,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GroupedPlaylist {
+    pub id: u64,
+    pub name: String,
+    pub description: String,
+    pub duration: u8,
+    pub scenarios: Vec<GroupedPlaylistScenario>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GroupedPlaylistScenario {
+    pub scenario_name: String,
+    pub scenario_difficulty: String,
+    pub games_played: u8,
+    pub reps: u8,
+    pub days: Vec<GroupedPlaylistGamesByDay>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub struct GroupedPlaylistGamesByDay {
+    pub games_count: u8,
 }
 
 const CURRENT_DB_VERSION: u32 = 1;
@@ -733,9 +769,11 @@ pub fn insert_playlist(
     let transaction = db.transaction()?;
 
     let query = "INSERT INTO playlist (name, description, duration) VALUES (?, ?, ?);";
-    transaction
-        .prepare(query)?
-        .execute(params![playlist_data.name, playlist_data.description])?;
+    transaction.prepare(query)?.execute(params![
+        playlist_data.name,
+        playlist_data.description,
+        playlist_data.duration
+    ])?;
     let playlist_id = transaction.last_insert_rowid();
 
     let query = "INSERT INTO scenario_playlist (scenario_id, playlist_id, reps) VALUES (?, ?, ?)";
@@ -750,4 +788,78 @@ pub fn insert_playlist(
     transaction.commit()?;
 
     Ok(())
+}
+
+pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>, rusqlite::Error> {
+    let query = "
+        SELECT p.id, p.name,
+            p.description,
+            p.duration,
+            s.name,
+            s.difficulty,
+            count(g.id),
+            sp.reps 
+        FROM playlist p 
+        LEFT JOIN scenario_playlist sp 
+        ON p.id = sp.playlist_id 
+        LEFT JOIN scenario s 
+        ON s.id = sp.scenario_id 
+        LEFT JOIN game g 
+        ON g.scenario_id = s.id 
+        AND g.created_at 
+            BETWEEN p.started_at 
+            AND CASE 
+                    WHEN p.state = 'ACTIVE' 
+                    THEN date(p.started_at, '+' || p.duration || ' days') 
+                    ELSE p.ended_at 
+                END 
+        GROUP BY sp.id order by p.id, date(g.created_at);";
+    let mut statement = db.prepare(query)?;
+    let mut rows = statement.query([])?;
+
+    let mut playlist_data_vec: Vec<GroupedPlaylist> = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let playlist_id = row.get(0)?;
+        let scenario_name: String = row.get(4)?;
+        let scenario_difficulty: String = row.get(5)?;
+        let games_played = row.get(6)?;
+        let reps = row.get(7)?;
+
+        let games_data = GroupedPlaylistGamesByDay {
+            games_count: games_played,
+        };
+
+        let scenario_data = GroupedPlaylistScenario {
+            scenario_name: scenario_name.clone(),
+            scenario_difficulty: scenario_difficulty.clone(),
+            games_played,
+            reps,
+            days: vec![games_data],
+        };
+
+        if let Some(existing_playlist) = playlist_data_vec.iter_mut().find(|p| p.id == playlist_id)
+        {
+            if let Some(existing_scenario) = existing_playlist
+                .scenarios
+                .iter_mut()
+                .find(|s| s.scenario_name == scenario_name)
+            {
+                existing_scenario.days.push(games_data);
+            } else {
+                existing_playlist.scenarios.push(scenario_data);
+            }
+        } else {
+            let playlist_data = GroupedPlaylist {
+                id: playlist_id,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                duration: row.get(3)?,
+                scenarios: vec![scenario_data],
+            };
+            playlist_data_vec.push(playlist_data);
+        }
+    }
+
+    Ok(playlist_data_vec)
 }

@@ -5,7 +5,9 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
-use database::{InsertPlaylist, Scenario, ScenarioChartStats, ScenarioGeneralStats, Settings};
+use database::{
+    GroupedPlaylist, InsertPlaylist, Scenario, ScenarioChartStats, ScenarioGeneralStats, Settings,
+};
 use file_reader::Data;
 use state::{AppState, ServiceAccess};
 use std::env;
@@ -122,6 +124,20 @@ fn fetch_scenarios_games(scenario_id: u64, app_handle: AppHandle) -> Vec<Data> {
 
     app_handle.db(|db| {
         match database::fetch_scenarios_games(scenario_id, db) {
+            Ok(fetched_games) => vec = fetched_games,
+            Err(err) => eprintln!("[Main]::fetch scenarios Error : {}", err),
+        };
+    });
+
+    vec
+}
+
+#[tauri::command]
+fn fetch_playlist_with_data(app_handle: AppHandle) -> Vec<GroupedPlaylist> {
+    let mut vec: Vec<GroupedPlaylist> = Vec::new();
+
+    app_handle.db(|db| {
+        match database::fetch_playlist_with_data(db) {
             Ok(fetched_games) => vec = fetched_games,
             Err(err) => eprintln!("[Main]::fetch scenarios Error : {}", err),
         };
@@ -257,7 +273,8 @@ fn main() {
             fetch_settings,
             fetch_chart_scenario_stats,
             fetch_general_scenario_stats,
-            insert_playlist
+            insert_playlist,
+            fetch_playlist_with_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
