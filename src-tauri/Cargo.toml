@@ -36,6 +36,7 @@ csv = "1.1"
 notify = "6.0.1"
 sha2 = "0.10.7"
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+rand = "0.8.5"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
