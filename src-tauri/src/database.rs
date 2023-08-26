@@ -790,6 +790,11 @@ pub fn insert_playlist(
 
     transaction.commit()?;
 
+    emit_tauri_event(crate::TauriEvent::Info(Payload {
+        message: "Insert playlist".to_owned(),
+        data: "Playlist was saved successfully".to_owned(),
+    }));
+
     Ok(())
 }
 
