@@ -142,6 +142,7 @@ pub fn upgrade_database_if_needed(
         tx.execute_batch(
             "
                 PRAGMA foreign_keys = ON;
+                PRAGMA recursive_triggers = OFF;
 
                 DROP TABLE IF EXISTS game;
                 DROP TABLE IF EXISTS scenario;
@@ -263,6 +264,17 @@ pub fn upgrade_database_if_needed(
                         started_at = CASE WHEN new.state = 'ACTIVE' THEN CURRENT_DATE ELSE started_at END,
                         ended_at = CASE WHEN new.state = 'ACTIVE' THEN DATE(CURRENT_TIMESTAMP, '+22 years') ELSE CURRENT_DATE END
                     WHERE id = new.id;
+                END;
+
+                CREATE TRIGGER activate_single_playlist
+                BEFORE UPDATE ON playlist
+                FOR EACH ROW
+                BEGIN
+                    IF NEW.state = 'ACTIVE' THEN
+                        UPDATE playlist
+                        SET state = 'INACTIVE'
+                        WHERE state = 'ACTIVE' AND id != NEW.id;
+                    END IF;
                 END;
             ",
         )?;
@@ -880,12 +892,11 @@ fn seed_database(db: &Transaction) -> Result<(), rusqlite::Error> {
 
     for playlist_num in 1..=10 {
         db.execute(
-            "INSERT INTO playlist (name, description, duration, state, started_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO playlist (name, description, duration, state, started_at) VALUES (?, ?, ?, ?)",
             params![
                 format!("Playlist {}", playlist_num),
                 "Description",
                 60,
-                "ACTIVE",
                 "2023-07-26 02:52:28",
             ],
         )?;
