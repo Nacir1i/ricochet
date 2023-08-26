@@ -7,7 +7,6 @@
     SidebarWrapper,
     SidebarCta,
     SidebarBrand,
-    DarkMode,
   } from "flowbite-svelte";
   import logo from "$lib/asset/app-icon.png";
   import { page } from "$app/stores";
@@ -23,6 +22,7 @@
     Target,
     User2,
     Settings,
+    List,
   } from "lucide-svelte";
   import { notifications } from "$lib/notification";
   import Toast from "$lib/Toast.svelte";
@@ -76,10 +76,11 @@
         limit: 50,
       });
 
+      console.log("data", data);
+
       if (data) {
         set_history(data);
       }
-      console.log("data", data);
     } catch (error) {
       console.error(error);
     }
@@ -121,6 +122,15 @@
         >
           <svelte:fragment slot="icon">
             <PieChart class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
+          </svelte:fragment>
+        </SidebarItem>
+        <SidebarItem
+          label="Playlists"
+          active={activeUrl === "/playlists"}
+          href="/playlists"
+        >
+          <svelte:fragment slot="icon">
+            <List class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
           </svelte:fragment>
         </SidebarItem>
         <SidebarItem
