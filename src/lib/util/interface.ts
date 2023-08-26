@@ -97,3 +97,28 @@ export interface Stat {
   generic: GenericStats;
   chart: FormattedChart;
 }
+
+export enum Difficulty {
+  EASY,
+  MEDIUM,
+  HARD,
+}
+
+export enum playlistState {
+  ACTIVE,
+  INACTIVE,
+}
+
+export interface GroupedPlaylist {
+  id: number;
+  name: string;
+  description: string;
+  duration: number;
+  state: playlistState;
+  scenarios: {
+    scenario_name: string;
+    scenario_difficulty: Difficulty;
+    reps: number;
+    days: { games_count: number }[];
+  }[];
+}
