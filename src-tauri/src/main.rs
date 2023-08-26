@@ -139,7 +139,7 @@ fn fetch_playlist_with_data(app_handle: AppHandle) -> Vec<GroupedPlaylist> {
     app_handle.db(|db| {
         match database::fetch_playlist_with_data(db) {
             Ok(fetched_games) => vec = fetched_games,
-            Err(err) => eprintln!("[Main]::fetch scenarios Error : {}", err),
+            Err(err) => eprintln!("[Main]::fetch playlist with data Error : {}", err),
         };
     });
 
