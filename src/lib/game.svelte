@@ -22,7 +22,7 @@
     >
       <li class="flex flex-wrap">
         <p>Kills:</p>
-        <p>{game.key_value[0].value}</p>
+        <p>{game.key_value[0]?.value}</p>
       </li>
       <li class="flex flex-wrap">
         <p>Accuracy:</p>
@@ -38,11 +38,11 @@
       </li>
       <li class="flex flex-wrap">
         <p>Sens:</p>
-        <p>{game.key_value[5].value}</p>
+        <p>{game.key_value[5]?.value}</p>
       </li>
       <li class="flex flex-wrap">
         <p>FOV:</p>
-        <p>{game.key_value[6].value}</p>
+        <p>{game.key_value[6]?.value}</p>
       </li>
     </ul>
   </div>
