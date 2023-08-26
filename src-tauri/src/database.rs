@@ -1,3 +1,4 @@
+use rand::Rng;
 use rusqlite::{named_params, params, Connection, Error, Transaction};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -86,6 +87,7 @@ pub struct GroupedPlaylist {
     pub name: String,
     pub description: String,
     pub duration: u8,
+    pub state: String,
     pub scenarios: Vec<GroupedPlaylistScenario>,
 }
 
@@ -93,7 +95,6 @@ pub struct GroupedPlaylist {
 pub struct GroupedPlaylistScenario {
     pub scenario_name: String,
     pub scenario_difficulty: String,
-    pub games_played: u8,
     pub reps: u8,
     pub days: Vec<GroupedPlaylistGamesByDay>,
 }
@@ -265,6 +266,8 @@ pub fn upgrade_database_if_needed(
                 END;
             ",
         )?;
+
+        seed_database(&tx)?;
 
         tx.commit()?;
 
@@ -721,7 +724,7 @@ pub fn fetch_chart_scenario_stats(
 
     let query = "
         SELECT s.name,
-            STRFTIME('%d/%m/%Y', st.created_at),
+            DATE(g.created_at),
             AVG(st.hits) / AVG(st.shots) * 100 AS accuracy 
         FROM scenario s 
         LEFT JOIN game g 
@@ -729,7 +732,7 @@ pub fn fetch_chart_scenario_stats(
         LEFT JOIN stats st 
         ON g.id = st.game_id 
         GROUP BY s.id, 
-            DATE(st.created_at);";
+            DATE(g.created_at);";
     let mut statement = db.prepare(query)?;
     let rows = statement.query_map([], |row| {
         Ok((
@@ -792,9 +795,11 @@ pub fn insert_playlist(
 
 pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>, rusqlite::Error> {
     let query = "
-        SELECT p.id, p.name,
+        SELECT p.id,
+            p.name,
             p.description,
             p.duration,
+            p.state,
             s.name,
             s.difficulty,
             count(g.id),
@@ -813,7 +818,8 @@ pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>,
                     THEN date(p.started_at, '+' || p.duration || ' days') 
                     ELSE p.ended_at 
                 END 
-        GROUP BY sp.id order by p.id, date(g.created_at);";
+        GROUP BY p.id, s.id, date(g.created_at)
+        ORDER BY p.id, sp.id ,date(g.created_at);";
     let mut statement = db.prepare(query)?;
     let mut rows = statement.query([])?;
 
@@ -821,10 +827,10 @@ pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>,
 
     while let Some(row) = rows.next()? {
         let playlist_id = row.get(0)?;
-        let scenario_name: String = row.get(4)?;
-        let scenario_difficulty: String = row.get(5)?;
-        let games_played = row.get(6)?;
-        let reps = row.get(7)?;
+        let scenario_name: String = row.get(5)?;
+        let scenario_difficulty: String = row.get(6)?;
+        let games_played = row.get(7)?;
+        let reps = row.get(8)?;
 
         let games_data = GroupedPlaylistGamesByDay {
             games_count: games_played,
@@ -833,7 +839,6 @@ pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>,
         let scenario_data = GroupedPlaylistScenario {
             scenario_name: scenario_name.clone(),
             scenario_difficulty: scenario_difficulty.clone(),
-            games_played,
             reps,
             days: vec![games_data],
         };
@@ -855,6 +860,7 @@ pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>,
                 name: row.get(1)?,
                 description: row.get(2)?,
                 duration: row.get(3)?,
+                state: row.get(4)?,
                 scenarios: vec![scenario_data],
             };
             playlist_data_vec.push(playlist_data);
@@ -862,4 +868,78 @@ pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>,
     }
 
     Ok(playlist_data_vec)
+}
+
+fn seed_database(db: &Transaction) -> Result<(), rusqlite::Error> {
+    let mut rng = rand::thread_rng();
+
+    for playlist_num in 1..=10 {
+        db.execute(
+            "INSERT INTO playlist (name, description, duration, state, started_at) VALUES (?, ?, ?, ?, ?)",
+            params![
+                format!("Playlist {}", playlist_num),
+                "Description",
+                60,
+                "ACTIVE",
+                "2023-07-26 02:52:28",
+            ],
+        )?;
+        let playlist_id = db.last_insert_rowid() as i32;
+
+        let scenarios_count = rng.gen_range(1..=10);
+
+        for scenario_num in 1..=scenarios_count {
+            db.execute(
+                "INSERT INTO scenario (name, difficulty) VALUES (?, ?)",
+                params![
+                    format!("Scenario {}-{}", playlist_num, scenario_num),
+                    "EASY".to_owned()
+                ],
+            )?;
+            let scenario_id = db.last_insert_rowid() as i32;
+
+            db.execute(
+                "INSERT INTO scenario_playlist (scenario_id, playlist_id, reps) VALUES (?, ?, ?)",
+                params![scenario_id, playlist_id, 5],
+            )?;
+
+            for day in 1..=9 {
+                let games_count = rng.gen_range(1..=9);
+
+                for game_num in 0..=games_count {
+                    let game_name = format!("Game {}", game_num);
+                    let game_id = db.last_insert_rowid() as i32;
+
+                    let shots = rng.gen_range(50..=200);
+                    let hits = rng.gen_range(20..=shots);
+                    let damage_done = rng.gen_range(50.0..=300.0);
+                    let damage_possible = rng.gen_range(damage_done..=400.0);
+
+                    db.execute(
+                        "INSERT INTO game (hash, scenario_id, name, created_at) VALUES (?, ?, ?, ?)",
+                        params![0, scenario_id, &game_name, format!("2023-08-0{} 02:52:28", day)],
+                    )?;
+
+                    db.execute(
+                        "INSERT INTO stats (game_id, weapon, shots, hits, damage_done, damage_possible) VALUES (?, ?, ?, ?, ?, ?)",
+                        params![game_id, "Weapon", shots, hits, damage_done, damage_possible],
+                    )?;
+
+                    for _ in 1..=7 {
+                        db.execute(
+                            "INSERT INTO key_value (game_id, key, value) VALUES (?, ?, ?)",
+                            params![game_id, "Key", "Value"],
+                        )?;
+                    }
+
+                    db.execute(
+                    "INSERT INTO tile (game_id, kill, timestamp, bot, weapon, ttk, shots, accuracy, damage_done, damage_possible, efficiency, cheated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![game_id, Some(1), "2023-08-26", "Bot", "Weapon", "0.5s", 10, 0.85, 100, 120, 0.75, false],
+                )?;
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
