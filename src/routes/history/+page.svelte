@@ -1,6 +1,6 @@
 <script lang="ts">
   import { history, scenarios } from "$lib";
-  import Game from "$lib/game.svelte";
+  import Game from "$lib/Game.svelte";
 
   $: hidden = true;
 </script>

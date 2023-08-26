@@ -14,7 +14,7 @@
   import { listen } from "@tauri-apps/api/event";
   import type { Payload, Game, Scenario, MessagePayload } from "$lib/util";
   import { set_history, set_scenarios, update_history } from "$lib";
-  import Titlebar from "$lib/titlebar.svelte";
+  import Titlebar from "$lib/Titlebar.svelte";
   import {
     PieChart,
     History,
