@@ -7,6 +7,8 @@
     SidebarWrapper,
     SidebarCta,
     SidebarBrand,
+    SidebarDropdownWrapper,
+    SidebarDropdownItem,
   } from "flowbite-svelte";
   import logo from "$lib/asset/app-icon.png";
   import { page } from "$app/stores";
@@ -124,15 +126,26 @@
             <PieChart class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem
+        <SidebarDropdownWrapper
           label="Playlists"
-          active={activeUrl === "/playlists"}
-          href="/playlists"
+          active={activeUrl === "/playlists" ||
+            "/playlists/create" ||
+            "/playlists/list"}
         >
           <svelte:fragment slot="icon">
             <List class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
           </svelte:fragment>
-        </SidebarItem>
+          <SidebarDropdownItem
+            label="List"
+            active={activeUrl === "/playlists/list"}
+            href="/playlists/list"
+          />
+          <SidebarDropdownItem
+            label="Create"
+            active={activeUrl === "/playlists/create"}
+            href="/playlists/create"
+          />
+        </SidebarDropdownWrapper>
         <SidebarItem
           label="Scenarios"
           active={activeUrl === "/scenarios"}
