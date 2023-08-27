@@ -99,14 +99,14 @@ export interface Stat {
 }
 
 export enum Difficulty {
-  EASY,
-  MEDIUM,
-  HARD,
+  EASY = "EASY",
+  MEDIUM = "MEDIUM",
+  HARD = "HARD",
 }
 
-export enum playlistState {
-  ACTIVE,
-  INACTIVE,
+export enum PlaylistState {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
 }
 
 export interface GroupedPlaylist {
@@ -114,7 +114,7 @@ export interface GroupedPlaylist {
   name: string;
   description: string;
   duration: number;
-  state: playlistState;
+  state: PlaylistState;
   scenarios: {
     scenario_name: string;
     scenario_difficulty: Difficulty;
