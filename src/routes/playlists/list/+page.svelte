@@ -13,7 +13,7 @@
 </script>
 
 <div
-  class="dark:bg-gray-600 w-full h-full p-5 flex flex-col gap-3 justify-start items-center overflow-y-scroll no-scrollbar"
+  class="dark:bg-gray-600 w-full h-full p-5 flex flex-col gap-3 justify-start items-center overflow-y-scroll no-scrollbar no-scrollbar"
 >
   <h1 class="text-center text-xl">Playlists :</h1>
   {#await playlists}

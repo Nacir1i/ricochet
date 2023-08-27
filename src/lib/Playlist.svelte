@@ -73,10 +73,13 @@
             <p>{scenario.reps}</p>
           </span>
           <span>
-            <p>Average accuracy per day :</p>
-            <ul class="list-decimal ml-3 pl-5">
-              {#each scenario.days as day}
-                <li>{day.games_count}</li>
+            <p>Games played per day :</p>
+            <ul class="ml-3 pl-5">
+              {#each scenario.days as day, index}
+                <span class="flex items-center gap-2">
+                  <p>Day {index + 1}:</p>
+                  <p>{day.games_count}</p>
+                </span>
               {/each}
             </ul>
           </span>

@@ -108,7 +108,9 @@
   $: activeUrl = $page.url.pathname;
 </script>
 
-<body class="pt-7 dark:bg-gray-300 light:bg-gray-200 w-screen h-screen flex">
+<body
+  class="pt-7 dark:bg-gray-300 light:bg-gray-200 w-screen h-screen flex cursor-default"
+>
   <Titlebar />
   <Sidebar class=" min-w-[16rem]">
     <SidebarWrapper

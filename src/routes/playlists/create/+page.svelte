@@ -23,7 +23,7 @@
 </script>
 
 <div
-  class=" dark:bg-gray-600 w-full h-full p-5 overflow-scroll flex flex-col justify-start items-center gap-10"
+  class=" dark:bg-gray-600 w-full h-full p-5 overflow-y-scroll no-scrollbar flex flex-col justify-start items-center gap-10"
 >
   <h1 class="text-center text-xl">Create a Playlists :</h1>
   <div class="mb-6 flex flex-col gap-5 w-max-[500px] w-[500px]">

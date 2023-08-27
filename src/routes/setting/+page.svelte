@@ -23,7 +23,7 @@
 </script>
 
 <div
-  class="dark:bg-gray-600 w-full h-full p-5 flex flex-col gap-6 overflow-scroll"
+  class="dark:bg-gray-600 w-full h-full p-5 flex flex-col gap-6 overflow-y-scroll no-scrollbar"
 >
   <h1>Settings</h1>
   {#await settings}
