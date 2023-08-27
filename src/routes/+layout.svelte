@@ -175,15 +175,6 @@
             <LineChart class="w-6 h-6 text-gray-800 dark:text-white" />
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem
-          label="Profile"
-          active={activeUrl === "/profile"}
-          href="profile"
-        >
-          <svelte:fragment slot="icon">
-            <User2 class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
-          </svelte:fragment>
-        </SidebarItem>
       </SidebarGroup>
       <SidebarGroup>
         <SidebarItem
