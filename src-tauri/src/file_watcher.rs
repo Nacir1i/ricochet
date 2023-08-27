@@ -28,7 +28,6 @@ pub fn file_watcher_thread(path: &String) {
                     data: "File watcher initiated successfully".to_owned(),
                 }));
 
-                println!("[File_watcher]::File watcher initiated");
                 notify_watcher
             }
             Err(err) => {
@@ -36,7 +35,6 @@ pub fn file_watcher_thread(path: &String) {
                     message: "Error while starting file watcher".to_owned(),
                     data: err.to_string(),
                 }));
-                eprintln!("[File_watcher]::Error : {}", err)
             }
         };
 
@@ -65,7 +63,6 @@ pub fn file_watcher_thread(path: &String) {
                                     message: "Error while parsing the file".to_owned(),
                                     data: err.to_string(),
                                 }));
-                                eprintln!("[File_watcher]::Error reading file: {}", err);
                             }
                         }
                     }

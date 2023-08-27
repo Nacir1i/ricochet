@@ -171,7 +171,6 @@ pub fn read_existing_files(path: &String) -> Vec<Data> {
                                 message: "Error while parsing the file".to_owned(),
                                 data: "".to_owned(),
                             }));
-                            eprintln!("[File_reader]::Error reading file: {:?}", file_entry.path());
                         }
                     }
                     Err(err) => {
@@ -179,7 +178,6 @@ pub fn read_existing_files(path: &String) -> Vec<Data> {
                             message: "Error while reading the file".to_owned(),
                             data: err.to_string(),
                         }));
-                        eprintln!("[File_reader]::Error reading directory entry: {}", err);
                     }
                 }
             }
@@ -189,7 +187,6 @@ pub fn read_existing_files(path: &String) -> Vec<Data> {
                 message: "Folder was not found".to_owned(),
                 data: err.to_string(),
             }));
-            eprintln!("[File_reader]::Error reading directory entry: {}", err)
         }
     }
 

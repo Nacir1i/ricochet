@@ -41,12 +41,7 @@
       </span>
     </div>
 
-    <button
-      on:click={() => {
-        toggle = !toggle;
-        console.log("clicked");
-      }}
-    >
+    <button on:click={() => (toggle = !toggle)}>
       {#if toggle}
         <ChevronUp class="cursor-pointer" />
       {:else}

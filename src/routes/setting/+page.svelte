@@ -10,7 +10,6 @@
       defaultPath: await homeDir(),
     });
 
-    console.log("selectedPath", selectedPath);
     if (!selectedPath) return;
     await invoke("update_dir_path", { path: selectedPath });
   }

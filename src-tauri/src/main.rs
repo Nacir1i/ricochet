@@ -77,16 +77,16 @@ fn emit_tauri_event(event: TauriEvent) {
 #[tauri::command]
 fn insert_game(data: Data, app_handle: AppHandle) {
     app_handle.db_mut(|db| match database::insert_game(&data, db) {
-        Ok(()) => println!("[Main]::game saved"),
-        Err(err) => eprintln!("[Main]::insert game Error : {:?}", err),
+        Ok(()) => (),
+        Err(_err) => (),
     })
 }
 
 #[tauri::command]
 fn insert_playlist(data: InsertPlaylist, app_handle: AppHandle) {
     app_handle.db_mut(|db| match database::insert_playlist(data, db) {
-        Ok(()) => println!("[Main]::playlist Saved"),
-        Err(err) => eprintln!("[Main]::insert playlist Error : {:?}", err),
+        Ok(()) => (),
+        Err(_err) => (),
     })
 }
 
@@ -97,7 +97,7 @@ fn fetch_game_page(page: u8, limit: u8, app_handle: AppHandle) -> Vec<Data> {
     app_handle.db(|db| {
         match database::fetch_game_page(page, limit, db) {
             Ok(fetched_data) => data = fetched_data,
-            Err(err) => eprintln!("[Main]::fetch data Error : {}", err),
+            Err(_err) => (),
         };
     });
 
@@ -111,7 +111,7 @@ fn fetch_scenarios(app_handle: AppHandle) -> Vec<Scenario> {
     app_handle.db(|db| {
         match database::fetch_scenarios(db) {
             Ok(fetched_scenarios) => vec = fetched_scenarios,
-            Err(err) => eprintln!("[Main]::fetch scenarios Error : {}", err),
+            Err(_err) => (),
         };
     });
 
@@ -125,7 +125,7 @@ fn fetch_scenarios_games(scenario_id: u64, app_handle: AppHandle) -> Vec<Data> {
     app_handle.db(|db| {
         match database::fetch_scenarios_games(scenario_id, db) {
             Ok(fetched_games) => vec = fetched_games,
-            Err(err) => eprintln!("[Main]::fetch scenarios Error : {}", err),
+            Err(_err) => (),
         };
     });
 
@@ -139,7 +139,7 @@ fn fetch_playlist_with_data(app_handle: AppHandle) -> Vec<GroupedPlaylist> {
     app_handle.db(|db| {
         match database::fetch_playlist_with_data(db) {
             Ok(fetched_games) => vec = fetched_games,
-            Err(err) => eprintln!("[Main]::fetch playlist with data Error : {}", err),
+            Err(_err) => (),
         };
     });
 
@@ -153,7 +153,7 @@ fn fetch_settings(app_handle: AppHandle) -> Settings {
     app_handle.db(|db| {
         match database::get_settings(db) {
             Ok(fetched_data) => settings = Some(fetched_data),
-            Err(err) => eprintln!("[Main]::fetch settings Error : {}", err),
+            Err(_err) => (),
         };
     });
 
@@ -167,7 +167,7 @@ fn fetch_general_scenario_stats(app_handle: AppHandle) -> Vec<ScenarioGeneralSta
     app_handle.db(|db| {
         match database::fetch_general_scenario_stats(db) {
             Ok(fetched_data) => data = fetched_data,
-            Err(err) => eprintln!("[Main]::fetch general stats Error : {}", err),
+            Err(_err) => (),
         };
     });
 
@@ -181,7 +181,7 @@ fn fetch_chart_scenario_stats(app_handle: AppHandle) -> Vec<ScenarioChartStats> 
     app_handle.db(|db| {
         match database::fetch_chart_scenario_stats(db) {
             Ok(fetched_data) => data = fetched_data,
-            Err(err) => eprintln!("[Main]::fetch chart scenario Error : {}", err),
+            Err(_err) => (),
         };
     });
 
@@ -191,8 +191,8 @@ fn fetch_chart_scenario_stats(app_handle: AppHandle) -> Vec<ScenarioChartStats> 
 #[tauri::command]
 fn clear_database(app_handle: AppHandle) {
     match app_handle.db_mut(|mut db| database::clear_database(&mut db)) {
-        Ok(()) => println!("[Main]::clear_database was successful"),
-        Err(err) => eprintln!("[Main]::clear_database Error : {:?}", err),
+        Ok(()) => (),
+        Err(_err) => (),
     }
 }
 
@@ -238,15 +238,8 @@ fn main() {
 
             let settings = database::get_settings(&db).unwrap();
 
-            let start = std::time::Instant::now();
             let data_vec = file_reader::read_existing_files(&settings.directory_path);
-            println!(
-                "[Main]::(reading files: {})time elapsed is: {:?}",
-                data_vec.len(),
-                start.elapsed()
-            );
 
-            let start = std::time::Instant::now();
             for data in data_vec {
                 match database::insert_game(&data, &mut db) {
                     Ok(()) => {}
@@ -255,14 +248,9 @@ fn main() {
                             message: "Error while saving a game".to_owned(),
                             data: err.to_string(),
                         }));
-                        println!("[Main]::Error while saving game: {:?}", err)
                     }
                 }
             }
-            println!(
-                "[Main]::(running queries)time elapsed is: {:?}",
-                start.elapsed()
-            );
 
             file_watcher::file_watcher_thread(&settings.directory_path);
 

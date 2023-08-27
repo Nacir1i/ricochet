@@ -42,7 +42,6 @@
 
       update_history(payload.data);
 
-      console.log("new run", payload);
       notifications.success("Run saved", 2000);
     });
   }
@@ -77,8 +76,6 @@
         page: 1,
         limit: 50,
       });
-
-      console.log("data", data);
 
       if (data) {
         set_history(data);

@@ -1,4 +1,3 @@
-use rand::Rng;
 use rusqlite::{named_params, params, Connection, Error, Transaction};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -122,8 +121,6 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlit
     drop(user_pragma);
 
     upgrade_database_if_needed(&mut db, existing_user_version)?;
-
-    println!("[Database]::database initialized");
 
     Ok(db)
 }
@@ -277,11 +274,7 @@ pub fn upgrade_database_if_needed(
             ",
         )?;
 
-        seed_database(&tx)?;
-
         tx.commit()?;
-
-        println!("[Database]::database updated");
     }
 
     Ok(())
@@ -313,14 +306,8 @@ pub fn get_settings(db: &Connection) -> Result<Settings, rusqlite::Error> {
     });
 
     match result {
-        Ok(settings) => {
-            println!("[Database]::Get settings : {:?}", settings);
-            Ok(settings)
-        }
-        Err(err) => {
-            println!("[Database]::(get_settings)Error : {:?}", err);
-            Err(err)
-        }
+        Ok(settings) => Ok(settings),
+        Err(err) => Err(err),
     }
 }
 
@@ -329,8 +316,6 @@ pub fn update_settings(settings: Settings, db: &Connection) -> Result<(), rusqli
         db.prepare("INSERT INTO setting (id, directory_path) VALUES (1, @directory_path) ON CONFLICT(id) DO UPDATE SET directory_path = @directory_path")?;
 
     statement.execute(named_params! { "@directory_path": settings.directory_path })?;
-
-    println!("[Database]::Update settings : {:?}", settings);
 
     emit_tauri_event(crate::TauriEvent::Warning(Payload {
         message: "Settings updated".to_owned(),
@@ -485,11 +470,11 @@ pub fn insert_game(data: &Data, db: &mut Connection) -> Result<(), rusqlite::Err
 
                         transaction.commit()?;
                     }
-                    Err(err) => eprintln!("[Database]::(scenario exists check)Error: {}", err),
+                    Err(_err) => (),
                 }
             }
         }
-        Err(err) => eprintln!("[Database]::(game exists check)Error: {}", err),
+        Err(_err) => (),
     }
 
     Ok(())
@@ -899,72 +884,4 @@ pub fn fetch_playlist_with_data(db: &Connection) -> Result<Vec<GroupedPlaylist>,
     }
 
     Ok(playlist_data_vec)
-}
-
-fn seed_database(db: &Transaction) -> Result<(), rusqlite::Error> {
-    let mut rng = rand::thread_rng();
-
-    for playlist_num in 1..=10 {
-        db.execute(
-            "INSERT INTO playlist (name, description, duration) VALUES (?, ?, ?)",
-            params![format!("Playlist {}", playlist_num), "Description", 60,],
-        )?;
-        let playlist_id = db.last_insert_rowid() as i32;
-
-        let scenarios_count = rng.gen_range(1..=10);
-
-        for scenario_num in 1..=scenarios_count {
-            db.execute(
-                "INSERT INTO scenario (name, difficulty) VALUES (?, ?)",
-                params![
-                    format!("Scenario {}-{}", playlist_num, scenario_num),
-                    "EASY".to_owned()
-                ],
-            )?;
-            let scenario_id = db.last_insert_rowid() as i32;
-
-            db.execute(
-                "INSERT INTO scenario_playlist (scenario_id, playlist_id, reps) VALUES (?, ?, ?)",
-                params![scenario_id, playlist_id, 5],
-            )?;
-
-            for day in 1..=9 {
-                let games_count = rng.gen_range(1..=9);
-
-                for game_num in 0..=games_count {
-                    let game_name = format!("Game {}", game_num);
-                    let game_id = db.last_insert_rowid() as i32;
-
-                    let shots = rng.gen_range(50..=200);
-                    let hits = rng.gen_range(20..=shots);
-                    let damage_done = rng.gen_range(50.0..=300.0);
-                    let damage_possible = rng.gen_range(damage_done..=400.0);
-
-                    db.execute(
-                        "INSERT INTO game (hash, scenario_id, name, created_at) VALUES (?, ?, ?, ?)",
-                        params![0, scenario_id, &game_name, format!("2023-08-0{} 02:52:28", day)],
-                    )?;
-
-                    db.execute(
-                        "INSERT INTO stats (game_id, weapon, shots, hits, damage_done, damage_possible) VALUES (?, ?, ?, ?, ?, ?)",
-                        params![game_id, "Weapon", shots, hits, damage_done, damage_possible],
-                    )?;
-
-                    for _ in 1..=7 {
-                        db.execute(
-                            "INSERT INTO key_value (game_id, key, value) VALUES (?, ?, ?)",
-                            params![game_id, "Key", "Value"],
-                        )?;
-                    }
-
-                    db.execute(
-                    "INSERT INTO tile (game_id, kill, timestamp, bot, weapon, ttk, shots, accuracy, damage_done, damage_possible, efficiency, cheated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    params![game_id, Some(1), "2023-08-26", "Bot", "Weapon", "0.5s", 10, 0.85, 100, 120, 0.75, false],
-                )?;
-                }
-            }
-        }
-    }
-
-    Ok(())
 }
