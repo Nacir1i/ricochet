@@ -6,7 +6,7 @@
 </script>
 
 <div
-  class="relative w-full h-full p-3 flex flex-wrap gap-3 content-start overflow-scroll"
+  class="dark:bg-gray-600 relative w-full h-full p-3 flex flex-wrap gap-3 content-start overflow-scroll"
 >
   <div class="fixed top-10 right-5 flex flex-col items-end gap-[6px]">
     <button

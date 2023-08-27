@@ -12,15 +12,15 @@
   const playlists = fetchScenariosWithData();
 </script>
 
-<div class="w-full h-full p-5 overflow-scroll">
+<div
+  class="dark:bg-gray-600 w-full h-full p-5 flex flex-col gap-3 justify-start items-center overflow-y-scroll no-scrollbar"
+>
   <h1 class="text-center text-xl">Playlists :</h1>
   {#await playlists}
     <p>...Loading</p>
   {:then playlist}
-    <div class="w-full flex flex-col gap-3">
-      {#each playlist as set}
-        <Playlist playlist={set} />
-      {/each}
-    </div>
+    {#each playlist as set}
+      <Playlist playlist={set} />
+    {/each}
   {/await}
 </div>

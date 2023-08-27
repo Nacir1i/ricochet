@@ -2,7 +2,7 @@
   import { scenarios } from "$lib";
 </script>
 
-<div class="w-full h-full p-5 overflow-scroll">
+<div class="dark:bg-gray-600 w-full h-full p-5 overflow-scroll">
   <h1>Scenarios</h1>
   <ul class="list-disc p-5">
     {#each $scenarios as scenario}

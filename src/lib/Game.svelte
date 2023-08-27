@@ -5,7 +5,7 @@
 </script>
 
 <div
-  class="w-[24rem] h-36 flex dark:bg-slate-600 bg-slate-400 flex-col justify-center items-center rounded-md text-black dark:text-white"
+  class="w-[24rem] h-36 flex dark:bg-slate-800 bg-slate-400 flex-col justify-center items-center rounded-md text-black dark:text-white"
 >
   <div class="w-full p-1 flex flex-col justify-center items-center">
     <h1>{game.key_value[3].value}</h1>
