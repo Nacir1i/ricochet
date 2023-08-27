@@ -210,6 +210,13 @@ fn update_dir_path(path: String, app_handle: AppHandle) {
         .unwrap();
 }
 
+#[tauri::command]
+fn update_playlist_state(playlist_id: u64, state: String, app_handle: AppHandle) {
+    app_handle
+        .db(|db| database::update_playlist_state(playlist_id, state, db))
+        .unwrap();
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
@@ -274,7 +281,8 @@ fn main() {
             fetch_chart_scenario_stats,
             fetch_general_scenario_stats,
             insert_playlist,
-            fetch_playlist_with_data
+            fetch_playlist_with_data,
+            update_playlist_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

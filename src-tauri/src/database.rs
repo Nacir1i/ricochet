@@ -261,20 +261,18 @@ pub fn upgrade_database_if_needed(
                 BEGIN
                     UPDATE playlist
                     SET 
-                        started_at = CASE WHEN new.state = 'ACTIVE' THEN CURRENT_DATE ELSE started_at END,
-                        ended_at = CASE WHEN new.state = 'ACTIVE' THEN DATE(CURRENT_TIMESTAMP, '+22 years') ELSE CURRENT_DATE END
-                    WHERE id = new.id;
+                        started_at = CASE WHEN NEW.state = 'ACTIVE' THEN CURRENT_TIMESTAMP ELSE started_at END,
+                        ended_at = CASE WHEN NEW.state = 'ACTIVE' THEN DATETIME(CURRENT_TIMESTAMP, '+' || NEW.duration || ' days') ELSE CURRENT_TIMESTAMP END
+                    WHERE id = NEW.id;
                 END;
 
                 CREATE TRIGGER activate_single_playlist
                 BEFORE UPDATE ON playlist
                 FOR EACH ROW
                 BEGIN
-                    IF NEW.state = 'ACTIVE' THEN
-                        UPDATE playlist
-                        SET state = 'INACTIVE'
-                        WHERE state = 'ACTIVE' AND id != NEW.id;
-                    END IF;
+                    UPDATE playlist
+                    SET state = IIF(NEW.state = 'ACTIVE', 'INACTIVE', state)
+                    WHERE state = 'ACTIVE' AND id != NEW.id;
                 END;
             ",
         )?;
@@ -286,6 +284,22 @@ pub fn upgrade_database_if_needed(
         println!("[Database]::database updated");
     }
 
+    Ok(())
+}
+
+pub fn update_playlist_state(
+    playlist_id: u64,
+    state: String,
+    db: &Connection,
+) -> Result<(), rusqlite::Error> {
+    let mut statement = db.prepare("UPDATE playlist SET state = @state WHERE id = @id")?;
+
+    statement.execute(named_params! { "@state": state, "@id": playlist_id })?;
+
+    emit_tauri_event(crate::TauriEvent::Info(Payload {
+        message: "Playlist updated".to_owned(),
+        data: "Playlist updated successfully".to_owned(),
+    }));
     Ok(())
 }
 
@@ -892,13 +906,8 @@ fn seed_database(db: &Transaction) -> Result<(), rusqlite::Error> {
 
     for playlist_num in 1..=10 {
         db.execute(
-            "INSERT INTO playlist (name, description, duration, state, started_at) VALUES (?, ?, ?, ?)",
-            params![
-                format!("Playlist {}", playlist_num),
-                "Description",
-                60,
-                "2023-07-26 02:52:28",
-            ],
+            "INSERT INTO playlist (name, description, duration) VALUES (?, ?, ?)",
+            params![format!("Playlist {}", playlist_num), "Description", 60,],
         )?;
         let playlist_id = db.last_insert_rowid() as i32;
 
