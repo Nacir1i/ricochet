@@ -182,7 +182,7 @@
         <SidebarItem
           label="Settings"
           active={activeUrl === "/setting"}
-          href="setting"
+          href="/setting"
         >
           <svelte:fragment slot="icon">
             <Settings class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
