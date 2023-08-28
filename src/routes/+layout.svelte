@@ -1,40 +1,13 @@
 <script lang="ts">
   import "../app.postcss";
-  import {
-    Sidebar,
-    SidebarGroup,
-    SidebarItem,
-    SidebarWrapper,
-    SidebarCta,
-    SidebarBrand,
-    SidebarDropdownWrapper,
-    SidebarDropdownItem,
-  } from "flowbite-svelte";
-  import logo from "$lib/asset/app-icon.png";
-  import { page } from "$app/stores";
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen } from "@tauri-apps/api/event";
   import type { Payload, Game, Scenario, MessagePayload } from "$lib/util";
   import { set_history, set_scenarios, update_history } from "$lib";
   import Titlebar from "$lib/Titlebar.svelte";
-  import {
-    PieChart,
-    History,
-    LineChart,
-    Target,
-    User2,
-    Settings,
-    List,
-  } from "lucide-svelte";
   import { notifications } from "$lib/notification";
   import Toast from "$lib/Toast.svelte";
-
-  let spanClass = "flex-1 ml-3 whitespace-nowrap";
-  let site = {
-    name: "Ricochet",
-    href: "/",
-    img: logo,
-  };
+  import Navbar from "$lib/Navbar.svelte";
 
   async function newRunListener() {
     await listen("new_run", (event) => {
@@ -105,98 +78,13 @@
   warningListener();
   fetch_data();
   fetchScenarios();
-  $: activeUrl = $page.url.pathname;
 </script>
 
 <body
-  class="pt-7 dark:bg-gray-300 light:bg-gray-200 w-screen h-screen flex cursor-default"
+  class="pt-7 dark:bg-gray-900 light:bg-gray-200 w-screen h-screen flex flex-col cursor-default dark:text-white"
 >
   <Titlebar />
-  <Sidebar class=" min-w-[16rem]">
-    <SidebarWrapper
-      class="flex flex-col justify-between bg-gray-100"
-      divClass="h-full overflow-y-auto py-4 px-3 bg-gray-50 dark:bg-gray-800"
-    >
-      <SidebarGroup>
-        <SidebarBrand class="my-5" {site} />
-        <SidebarItem
-          label="Dashboard"
-          active={activeUrl === ("/" || "/dashboard")}
-          href="/"
-        >
-          <svelte:fragment slot="icon">
-            <PieChart class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
-          </svelte:fragment>
-        </SidebarItem>
-        <SidebarDropdownWrapper
-          label="Playlists"
-          active={activeUrl === "/playlists" ||
-            "/playlists/create" ||
-            "/playlists/list"}
-        >
-          <svelte:fragment slot="icon">
-            <List class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
-          </svelte:fragment>
-          <SidebarDropdownItem
-            label="List"
-            active={activeUrl === "/playlists/list"}
-            href="/playlists/list"
-          />
-          <SidebarDropdownItem
-            label="Create"
-            active={activeUrl === "/playlists/create"}
-            href="/playlists/create"
-          />
-        </SidebarDropdownWrapper>
-        <SidebarItem
-          label="Scenarios"
-          active={activeUrl === "/scenarios"}
-          href="/scenarios"
-          {spanClass}
-        >
-          <svelte:fragment slot="icon">
-            <Target class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
-          </svelte:fragment>
-        </SidebarItem>
-        <SidebarItem
-          label="History"
-          active={activeUrl === "/history"}
-          href="/history"
-          {spanClass}
-        >
-          <svelte:fragment slot="icon">
-            <History class="w-6 h-6 text-gray-800 dark:text-white" />
-          </svelte:fragment>
-        </SidebarItem>
-        <SidebarItem
-          label="Stats"
-          active={activeUrl === "/stats"}
-          href="/stats"
-        >
-          <svelte:fragment slot="icon">
-            <LineChart class="w-6 h-6 text-gray-800 dark:text-white" />
-          </svelte:fragment>
-        </SidebarItem>
-      </SidebarGroup>
-      <SidebarGroup>
-        <SidebarItem
-          label="Settings"
-          active={activeUrl === "/setting"}
-          href="/setting"
-        >
-          <svelte:fragment slot="icon">
-            <Settings class="w-6 h-6 stoke-gray-800 dark:stoke-white" />
-          </svelte:fragment>
-        </SidebarItem>
-        <SidebarCta label="Beta">
-          <svelte:fragment slot="icon" />
-          <p class="mb-3 text-sm text-primary-900 dark:text-primary-400">
-            This app is still in production, with many more features to come
-          </p>
-        </SidebarCta>
-      </SidebarGroup>
-    </SidebarWrapper>
-  </Sidebar>
+  <Navbar />
   <slot />
   <Toast />
 </body>
