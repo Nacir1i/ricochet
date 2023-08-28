@@ -6,9 +6,9 @@
 </script>
 
 <div
-  class="dark:bg-gray-600 relative w-full h-full p-3 flex flex-wrap gap-3 content-start overflow-y-scroll no-scrollbar"
+  class="relative w-full h-full p-3 flex flex-wrap gap-3 content-start overflow-y-scroll no-scrollbar"
 >
-  <div class="fixed top-10 right-5 flex flex-col items-end gap-[6px]">
+  <div class="fixed top-[130px] right-5 flex flex-col items-end gap-[6px]">
     <button
       id="dropdownDefault"
       class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"

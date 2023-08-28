@@ -46,7 +46,7 @@
   const stats = fetch_stats();
 </script>
 
-<div class="dark:bg-gray-600 w-full p-5 overflow-y-scroll no-scrollbar">
+<div class="w-full p-5 overflow-y-scroll no-scrollbar">
   {#await stats}
     <p>...loading</p>
   {:then stat}
