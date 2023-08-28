@@ -1,18 +1,15 @@
 <script lang="ts">
   import { scenarios } from "$lib";
+  import Scenario from "$lib/Scenario.svelte";
 </script>
 
-<div class="dark:bg-gray-600 w-full h-full p-5 overflow-y-scroll no-scrollbar">
+<div
+  class="dark:bg-gray-600 w-full h-full p-5 overflow-y-scroll no-scrollbar flex flex-col justify-start items-center gap-3"
+>
   <h1>Scenarios</h1>
-  <ul class="list-disc p-5">
+  <div class="w-full flex flex-wrap gap-3">
     {#each $scenarios as scenario}
-      <li class="p-5">
-        <p>id: {scenario.id}</p>
-        <p>name: {scenario.name}</p>
-        <p>difficulty: {scenario.difficulty}</p>
-        <p>created_at: {scenario.created_at}</p>
-        <p>games_count: {scenario.games_count}</p>
-      </li>
+      <Scenario {scenario} />
     {/each}
-  </ul>
+  </div>
 </div>
