@@ -20,7 +20,7 @@
   <h1 class=" text-center text-lg">
     {stat.generic.name} ({stat.generic.games_count})
   </h1>
-  <ul class=" text-sm">
+  <ul class=" text-sm text-black">
     <li>Average Shots :{stat.generic.shots?.toFixed(2)}</li>
     <li>Average Hits :{stat.generic.hits?.toFixed(2)}</li>
     <li>Average Accuracy :{stat.generic.accuracy?.toFixed(2)}</li>
