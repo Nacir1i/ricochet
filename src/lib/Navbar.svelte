@@ -1,7 +1,8 @@
 <script lang="ts">
   import logo from "$lib/asset/app-icon.png";
   import { page } from "$app/stores";
-  import { Bell, Search, Settings } from "lucide-svelte";
+  import { Bell, ChevronDown, Search, Settings } from "lucide-svelte";
+  import { Dropdown, DropdownItem } from "flowbite-svelte";
 
   const menu = [
     {
@@ -30,7 +31,7 @@
 </script>
 
 <nav
-  class="w-full p-4 py-7 bg-white border-gray-200 dark:bg-gray-900 flex justify-between items-center"
+  class="w-full p-4 py-7 bg-white border-gray-200 dark:bg-gray-900 flex justify-between xl:justify-around items-center"
 >
   <div class="flex justify-center items-center gap-5">
     <a href="/" class="flex items-center">
@@ -55,8 +56,10 @@
       </button>
     </div>
   </div>
-  <div class="flex justify-between items-center gap-16 dark:text-white">
-    <ul class="flex justify-center items-center gap-6 text-base">
+  <div
+    class=" 2xl:w-[55%] flex justify-between items-center gap-16 dark:text-white"
+  >
+    <ul class="flex justify-center items-center gap-5 text-base">
       <li>
         <a
           href="/"
@@ -64,13 +67,15 @@
           >Dashboard</a
         >
       </li>
-      <li>
-        <a
-          href="/playlists/list"
-          class={activeUrl === "/playlists/list"
+      <li class="flex gap-2 cursor-pointer" id="playlist">
+        <p
+          class={activeUrl === "/playlists"
             ? "border-orange-500 border-b-4"
-            : ""}>Playlists</a
+            : ""}
         >
+          Playlists
+        </p>
+        <ChevronDown class="w-4" />
       </li>
       <li>
         <a
@@ -95,11 +100,19 @@
           >Stats</a
         >
       </li>
+      <Dropdown triggeredBy="#playlist" class="w-44 z-20">
+        <DropdownItem href="/playlists/list">List</DropdownItem>
+        <DropdownItem href="/playlists/create">Create</DropdownItem>
+      </Dropdown>
     </ul>
     <div class="flex justify-center items-center gap-6">
-      <button><Bell class="w-5" /></button>
-      <a href="/setting" class="w-5">
+      <button class="flex gap-2">
+        <Bell class="w-5" />
+        <p class="hidden xl:inline">Notifications</p>
+      </button>
+      <a href="/setting" class="flex gap-2">
         <Settings class="w-5" />
+        <p class="hidden xl:inline">Settings</p>
       </a>
     </div>
   </div>
