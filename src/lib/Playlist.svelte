@@ -19,7 +19,7 @@
         <p class="text-lg">Name:</p>
         <p>{playlist.name}</p>
         <Button
-          class="py-1 px-2"
+          class="py-[2px] px-2 rounded-sm text-xs"
           color={playlist.state === PlaylistState.ACTIVE ? "green" : "red"}
           on:click={() =>
             invoke("update_playlist_state", {

@@ -9,7 +9,7 @@
 >
   <div />
   <h1
-    class="dark:text-white text-sm justify-self-center fixed left-1/2 -translate-x-1/2"
+    class="dark:text-white text-sm justify-self-center absolute left-1/2 -translate-x-1/2 pointer-events-none"
   >
     Ricochet
   </h1>
