@@ -95,7 +95,6 @@ dependencies = [
  "csv",
  "dotenvy",
  "notify",
- "rand 0.8.5",
  "rusqlite",
  "serde",
  "serde_json",
