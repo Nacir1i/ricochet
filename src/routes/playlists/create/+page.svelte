@@ -22,11 +22,8 @@
   let description: string;
 </script>
 
-<div
-  class=" dark:bg-gray-600 w-full h-full p-5 overflow-scroll flex flex-col justify-start items-center gap-10"
->
-  <h1 class="text-center text-xl">Create a Playlists :</h1>
-  <div class="mb-6 flex flex-col gap-5 w-max-[500px] w-[500px]">
+<div class="w-full h-full p-5 flex flex-col justify-start items-center">
+  <div class="flex flex-col w-max-[500px] w-[500px] space-y-5">
     <Input id="name" size="lg" placeholder="Playlist name" bind:value={name} />
     <Input
       id="duration"
@@ -35,7 +32,7 @@
       bind:value={duration}
     />
     <Textarea {...textAreaProps} bind:value={description} />
-    <div class="w-full flex flex-col gap-2">
+    <div class="w-full flex flex-col space-y-5">
       <div class="w-full flex justify-between">
         <h1 class="text-lg">Scenarios</h1>
         <Button
@@ -53,7 +50,7 @@
         </Button>
       </div>
       {#each scenarioInputArray as input, index}
-        <div class="w-full mb-6 flex gap-2 justify-center">
+        <div class="w-full flex justify-center space-x-2">
           <Select
             class="w-[70%] h-10"
             items={selectScenario}

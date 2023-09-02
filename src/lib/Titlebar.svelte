@@ -5,8 +5,14 @@
 
 <div
   data-tauri-drag-region
-  class="h-7 dark:bg-gray-900 bg-gray-300 select-none flex justify-end fixed top-0 left-0 right-0 z-50"
+  class="h-7 dark:bg-gray-700 bg-gray-300 select-none flex justify-end items-center fixed top-0 left-0 right-0 z-50"
 >
+  <div />
+  <h1
+    class="dark:text-white text-sm justify-self-center absolute left-1/2 -translate-x-1/2 pointer-events-none"
+  >
+    Ricochet
+  </h1>
   <DarkMode btnClass="p-1 dark:text-white" />
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -33,7 +39,7 @@
   </div>
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div
+  <!-- <div
     on:click={() => appWindow.toggleMaximize()}
     class="h-7 w-7 inline-flex justify-center items-center hover:bg-slate-400 dark:text-white text-gray-800"
     id=""
@@ -55,7 +61,7 @@
         d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"
       />
     </svg>
-  </div>
+  </div> -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div

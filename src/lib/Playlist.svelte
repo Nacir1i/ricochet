@@ -11,7 +11,9 @@
 
 <div
   data-te-perfect-scrollbar-init
-  class="w-[500px] max-w-[500px] dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"
+  class={toggle
+    ? "w-full row-span-2 dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"
+    : "w-full dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"}
 >
   <div class="flex items-center justify-between mb-2">
     <div class="flex flex-col gap-2">
@@ -19,7 +21,7 @@
         <p class="text-lg">Name:</p>
         <p>{playlist.name}</p>
         <Button
-          class="py-1 px-2"
+          class="py-[2px] px-2 rounded-sm text-xs"
           color={playlist.state === PlaylistState.ACTIVE ? "green" : "red"}
           on:click={() =>
             invoke("update_playlist_state", {
@@ -41,7 +43,11 @@
       </span>
     </div>
 
-    <button on:click={() => (toggle = !toggle)}>
+    <button
+      on:click={() => {
+        toggle = !toggle;
+      }}
+    >
       {#if toggle}
         <ChevronUp class="cursor-pointer" />
       {:else}
@@ -51,7 +57,7 @@
   </div>
   {#if toggle}
     <div
-      class="border-t-2 dark:border-white border-gray-400 pt-2 flex flex-col gap-5"
+      class="border-t-[1px] max-h-[150px] dark:border-gray-300 border-gray-400 pt-2 flex flex-col gap-5 overflow-y-scroll"
     >
       {#each playlist.scenarios as scenario}
         <div>
@@ -68,10 +74,13 @@
             <p>{scenario.reps}</p>
           </span>
           <span>
-            <p>Average accuracy per day :</p>
-            <ul class="list-decimal ml-3 pl-5">
-              {#each scenario.days as day}
-                <li>{day.games_count}</li>
+            <p>Games played per day :</p>
+            <ul class="ml-3 pl-5">
+              {#each scenario.days as day, index}
+                <span class="flex items-center gap-2">
+                  <p>Day {index + 1}:</p>
+                  <p>{day.games_count}</p>
+                </span>
               {/each}
             </ul>
           </span>

@@ -1,69 +1,85 @@
 <script lang="ts">
-  import { history, scenarios } from "$lib";
-  import Game from "$lib/Game.svelte";
+  import { history } from "$lib";
+  import {
+    Pagination,
+    PaginationItem,
+    TableBody,
+    TableBodyCell,
+    TableBodyRow,
+    TableHead,
+    TableHeadCell,
+    TableSearch,
+  } from "flowbite-svelte";
 
-  $: hidden = true;
+  let searchTerm = "";
+  let helper = { start: 1, end: 20, total: "X" };
+
+  $: filteredItems = $history.filter(
+    (item) =>
+      item.key_value[3].value
+        .toLowerCase()
+        .indexOf(searchTerm.toLowerCase()) !== -1
+  );
 </script>
 
 <div
-  class="dark:bg-gray-600 relative w-full h-full p-3 flex flex-wrap gap-3 content-start overflow-scroll"
+  class="w-full h-full p-10 pt-0 pb-3 overflow-y-scroll no-scrollbar flex flex-col gap-3"
 >
-  <div class="fixed top-10 right-5 flex flex-col items-end gap-[6px]">
-    <button
-      id="dropdownDefault"
-      class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-      type="button"
-      on:click={() => (hidden = !hidden)}
-    >
-      Filter
-      <svg
-        class="w-4 h-4 ml-2"
-        aria-hidden="true"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
+  <TableSearch
+    divClass="[&>*]:p-0 [&>*]:py-2"
+    placeholder="search by scenario name"
+    bind:inputValue={searchTerm}
+  >
+    <TableHead>
+      <TableHeadCell>NAME</TableHeadCell>
+      <TableHeadCell>SCORE</TableHeadCell>
+      <TableHeadCell>KILLS</TableHeadCell>
+      <TableHeadCell>ACCURACY</TableHeadCell>
+      <TableHeadCell>SHOTS TAKEN</TableHeadCell>
+      <TableHeadCell>SHOTS HIT</TableHeadCell>
+      <TableHeadCell>SENSE</TableHeadCell>
+      <TableHeadCell>FOV</TableHeadCell>
+    </TableHead>
+    <TableBody>
+      {#each filteredItems as game}
+        <TableBodyRow>
+          <TableBodyCell>{game.key_value[3]?.value}</TableBodyCell>
+          <TableBodyCell>{game.key_value[2]?.value}</TableBodyCell>
+          <TableBodyCell>{game.key_value[0]?.value}</TableBodyCell>
+          <TableBodyCell
+            >{Math.floor(
+              (game.stats?.hits / game.stats?.shots) * 100
+            )}%</TableBodyCell
+          >
+          <TableBodyCell>{game.stats?.shots}</TableBodyCell>
+          <TableBodyCell>{game.stats?.hits}</TableBodyCell>
+          <TableBodyCell>{game.key_value[5]?.value}</TableBodyCell>
+          <TableBodyCell>{game.key_value[6]?.value}</TableBodyCell>
+        </TableBodyRow>
+      {/each}
+    </TableBody>
+  </TableSearch>
+  <div class="w-full flex items-center justify-between">
+    <div class="left-0 text-sm text-gray-700 dark:text-gray-400">
+      Showing <span class="font-semibold text-gray-900 dark:text-white"
+        >{helper.start}</span
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M19 9l-7 7-7-7"
-        />
-      </svg>
-    </button>
-
-    <div
-      id="dropdown"
-      class={hidden
-        ? "z-10 hidden w-64 max-h-[25rem] p-3 bg-white rounded-lg shadow dark:bg-gray-700 overflow-scroll"
-        : "z-10 w-64 max-h-[25rem] p-3 bg-white rounded-lg shadow dark:bg-gray-700 overflow-scroll"}
-    >
-      <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
-        Scenarios :
-      </h6>
-      <ul class="space-y-2 text-sm" aria-labelledby="dropdownDefault">
-        {#each $scenarios as scenario}
-          <li class="flex items-center">
-            <input
-              id="apple"
-              type="checkbox"
-              value=""
-              class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-            />
-
-            <label
-              for="apple"
-              class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100"
-            >
-              {scenario.name} ({scenario.games_count})
-            </label>
-          </li>
-        {/each}
-      </ul>
+      to
+      <span class="font-semibold text-gray-900 dark:text-white"
+        >{helper.end}</span
+      >
+      of
+      <span class="font-semibold text-gray-900 dark:text-white"
+        >{helper.total}</span
+      >
+      Entries
     </div>
+
+    <Pagination table>
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <span slot="prev" on:click={() => console.log("clicked")}>Prev</span>
+      <span slot="next">Next</span>
+    </Pagination>
   </div>
-  {#each $history as game}
-    <Game {game} />
-  {/each}
 </div>

@@ -137,7 +137,21 @@ fn fetch_playlist_with_data(app_handle: AppHandle) -> Vec<GroupedPlaylist> {
     let mut vec: Vec<GroupedPlaylist> = Vec::new();
 
     app_handle.db(|db| {
-        match database::fetch_playlist_with_data(db) {
+        match database::fetch_playlist_with_data(db, false) {
+            Ok(fetched_games) => vec = fetched_games,
+            Err(err) => eprintln!("[Main]::fetch playlist with data Error : {}", err),
+        };
+    });
+
+    vec
+}
+
+#[tauri::command]
+fn fetch_active_playlist_with_data(app_handle: AppHandle) -> Vec<GroupedPlaylist> {
+    let mut vec: Vec<GroupedPlaylist> = Vec::new();
+
+    app_handle.db(|db| {
+        match database::fetch_playlist_with_data(db, true) {
             Ok(fetched_games) => vec = fetched_games,
             Err(_err) => (),
         };
@@ -270,7 +284,8 @@ fn main() {
             fetch_general_scenario_stats,
             insert_playlist,
             fetch_playlist_with_data,
-            update_playlist_state
+            update_playlist_state,
+            fetch_active_playlist_with_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
