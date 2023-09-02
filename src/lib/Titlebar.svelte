@@ -39,7 +39,7 @@
   </div>
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div
+  <!-- <div
     on:click={() => appWindow.toggleMaximize()}
     class="h-7 w-7 inline-flex justify-center items-center hover:bg-slate-400 dark:text-white text-gray-800"
     id=""
@@ -61,7 +61,7 @@
         d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"
       />
     </svg>
-  </div>
+  </div> -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div

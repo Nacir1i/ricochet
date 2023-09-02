@@ -2,6 +2,7 @@
   import { invoke } from "@tauri-apps/api";
   import type { GroupedPlaylist } from "$lib/util";
   import Playlist from "$lib/Playlist.svelte";
+  import Loader from "$lib/Loader.svelte";
 
   async function fetchScenariosWithData() {
     const data = await invoke<GroupedPlaylist[]>("fetch_playlist_with_data");
@@ -9,18 +10,17 @@
     return data;
   }
 
-  const playlists = fetchScenariosWithData();
+  const fetchedPlaylists = fetchScenariosWithData();
 </script>
 
 <div
-  class="w-full h-full p-5 flex flex-col gap-3 justify-start items-center overflow-y-scroll no-scrollbar no-scrollbar"
+  class="w-full h-full p-10 grid grid-cols-2 gap-3 justify-center items-start overflow-y-scroll no-scrollbar no-scrollbar"
 >
-  <h1 class="text-center text-xl">Playlists :</h1>
-  {#await playlists}
-    <p>...Loading</p>
-  {:then playlist}
-    {#each playlist as set}
-      <Playlist playlist={set} />
+  {#await fetchedPlaylists}
+    <Loader />
+  {:then playlists}
+    {#each playlists as playlist}
+      <Playlist {playlist} />
     {/each}
   {/await}
 </div>

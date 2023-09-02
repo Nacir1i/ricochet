@@ -75,6 +75,7 @@ export interface GenericStats {
   accuracy?: number;
   damage_done?: number;
   damage_possible?: number;
+  score?: number;
 }
 
 export interface DataChart {

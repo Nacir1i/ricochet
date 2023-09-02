@@ -3,6 +3,7 @@
   import { homeDir } from "@tauri-apps/api/path";
   import { invoke } from "@tauri-apps/api";
   import type { Settings } from "$lib/util";
+  import Loader from "$lib/Loader.svelte";
 
   async function changeDirPath() {
     const selectedPath = await open({
@@ -10,7 +11,6 @@
       defaultPath: await homeDir(),
     });
 
-    console.log("selectedPath", selectedPath);
     if (!selectedPath) return;
     await invoke("update_dir_path", { path: selectedPath });
   }
@@ -23,11 +23,10 @@
 </script>
 
 <div
-  class="w-full h-full p-5 flex flex-col gap-6 overflow-y-scroll no-scrollbar"
+  class="w-full h-full p-10 flex flex-col gap-6 overflow-y-scroll no-scrollbar"
 >
-  <h1>Settings</h1>
   {#await settings}
-    <p>...loading</p>
+    <Loader />
   {:then setting}
     <div class="w-full h-10 flex gap-5">
       <input
@@ -35,7 +34,7 @@
         disabled
         readonly
         value={setting.directory_path}
-        class=" dark:bg-white bg-gray-200 border-none rounded-md text-black dark:text-gray-400 w-[35rem]"
+        class=" dark:bg-white bg-gray-200 border-none rounded-md text-black dark:text-gray-400 w-[51rem]"
       />
       <button
         class="px-3 bg-[#ff6f3c] rounded-md text-white text-sm"

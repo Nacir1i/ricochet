@@ -80,11 +80,13 @@
       {
         "label": "main",
         "fullscreen": false,
-        "height": 720,
-        "resizable": true,
-        "title": "ricochet",
-        "width": 1080,
-        "decorations": false
+        "title": "Ricochet",
+        "decorations": false,
+        "height": 768,
+        "width": 1024,
+        "minHeight": 768,
+        "minWidth": 1024,
+        "resizable": false
       }
     ]
   }

@@ -11,7 +11,9 @@
 
 <div
   data-te-perfect-scrollbar-init
-  class="w-[500px] max-w-[500px] dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"
+  class={toggle
+    ? "w-full row-span-2 dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"
+    : "w-full dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"}
 >
   <div class="flex items-center justify-between mb-2">
     <div class="flex flex-col gap-2">
@@ -44,7 +46,6 @@
     <button
       on:click={() => {
         toggle = !toggle;
-        console.log("clicked");
       }}
     >
       {#if toggle}
@@ -56,7 +57,7 @@
   </div>
   {#if toggle}
     <div
-      class="border-t-2 dark:border-white border-gray-400 pt-2 flex flex-col gap-5"
+      class="border-t-[1px] max-h-[150px] dark:border-gray-300 border-gray-400 pt-2 flex flex-col gap-5 overflow-y-scroll"
     >
       {#each playlist.scenarios as scenario}
         <div>

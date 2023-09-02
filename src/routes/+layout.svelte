@@ -3,7 +3,13 @@
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen } from "@tauri-apps/api/event";
   import type { Payload, Game, Scenario, MessagePayload } from "$lib/util";
-  import { set_history, set_scenarios, update_history } from "$lib";
+  import {
+    setDashboardHistory,
+    set_history,
+    set_scenarios,
+    updateDashboardHistory,
+    update_history,
+  } from "$lib";
   import Titlebar from "$lib/Titlebar.svelte";
   import { notifications } from "$lib/notification";
   import Toast from "$lib/Toast.svelte";
@@ -14,8 +20,8 @@
       const payload = event.payload as Payload;
 
       update_history(payload.data);
+      updateDashboardHistory(payload.data);
 
-      console.log("new run", payload);
       notifications.success("Run saved", 2000);
     });
   }
@@ -48,13 +54,12 @@
     try {
       const data = await invoke<Game[]>("fetch_game_page", {
         page: 1,
-        limit: 50,
+        limit: 20,
       });
-
-      console.log("data", data);
 
       if (data) {
         set_history(data);
+        setDashboardHistory(data.slice(0, 5));
       }
     } catch (error) {
       console.error(error);
