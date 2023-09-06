@@ -9,15 +9,9 @@
     TableHeadCell,
   } from "flowbite-svelte";
   import { invoke } from "@tauri-apps/api";
-  import type {
-    ChartStats,
-    FormattedChart,
-    GenericStats,
-    GroupedPlaylist,
-    Stat,
-  } from "$lib/util";
+  import type { GroupedPlaylist, ScenarioData } from "$lib/util";
   import Loader from "$lib/Loader.svelte";
-  import GenericStatsComp from "$lib/GenericStatsComp.svelte";
+  import GenericStatsComp from "$lib/Scenario.svelte";
 
   async function fetchActivePlaylist() {
     const data = await invoke<GroupedPlaylist[]>(
@@ -39,48 +33,18 @@
     return { data, gamesToPlay, playedGames };
   }
 
-  async function fetch_stats(): Promise<Stat[]> {
-    const generic: [] | GenericStats[] = await invoke(
-      "fetch_general_scenario_stats"
-    );
-    const charts: [] | ChartStats[] = await invoke(
-      "fetch_chart_scenario_stats"
-    );
+  async function fetch_scenarios(): Promise<ScenarioData[]> {
+    const data = await invoke<ScenarioData[]>("fetch_scenario_data");
+    console.log(data);
 
-    return formatStats(charts, generic);
+    return data;
   }
 
-  function formatStats(charts: ChartStats[], generics: GenericStats[]) {
-    let stats: Stat[] = [];
-
-    for (let i = 0; i < charts.length; i++) {
-      let data: FormattedChart;
-      let accuracyArray: number[] = [];
-      let dateArray: string[] = [];
-
-      for (let j = 0; j < charts[i].data.length; j++) {
-        accuracyArray = [...accuracyArray, charts[i].data[j].avg_accuracy ?? 0];
-        dateArray = [...dateArray, charts[i].data[j].date];
-      }
-
-      data = { name: charts[i].name, accuracyArray, dateArray };
-      const correspondingGeneric = generics.filter(
-        (generic) => generic.name === charts[i].name
-      )[0];
-
-      stats = [...stats, { chart: data, generic: correspondingGeneric }];
-    }
-
-    return stats
-      .sort((key1, key2) => key2.generic.games_count - key1.generic.games_count)
-      .slice(0, 5);
-  }
-
-  const stats = fetch_stats();
+  const scenarios = fetch_scenarios();
   const activePlaylist = fetchActivePlaylist();
 
   //This disables contextmenu, (should prob find a better solution)
-  document.addEventListener("contextmenu", (event) => event.preventDefault());
+  // document.addEventListener("contextmenu", (event) => event.preventDefault());
 </script>
 
 <div class="w-full h-full p-10 pt-2 flex overflow-y-scroll no-scrollbar gap-16">
@@ -92,12 +56,12 @@
     >
       Top played scenarios
     </h1>
-    {#await stats}
+    {#await scenarios}
       <Loader />
-    {:then awaitedStats}
+    {:then scenarios}
       <div class="h-full w-full flex flex-col gap-11">
-        {#each awaitedStats as stat}
-          <GenericStatsComp {stat} />
+        {#each scenarios as scenario}
+          <GenericStatsComp {scenario} />
         {/each}
       </div>
     {:catch}

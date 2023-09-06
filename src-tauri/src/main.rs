@@ -5,9 +5,7 @@ mod file_reader;
 mod file_watcher;
 mod state;
 
-use database::{
-    GroupedPlaylist, InsertPlaylist, Scenario, ScenarioChartStats, ScenarioGeneralStats, Settings,
-};
+use database::{GroupedPlaylist, InsertPlaylist, Scenario, ScenarioData, Settings};
 use file_reader::Data;
 use state::{AppState, ServiceAccess};
 use std::env;
@@ -175,27 +173,13 @@ fn fetch_settings(app_handle: AppHandle) -> Settings {
 }
 
 #[tauri::command]
-fn fetch_general_scenario_stats(app_handle: AppHandle) -> Vec<ScenarioGeneralStats> {
-    let mut data: Vec<ScenarioGeneralStats> = Vec::new();
+fn fetch_scenario_data(app_handle: AppHandle) -> Vec<ScenarioData> {
+    let mut data: Vec<ScenarioData> = Vec::new();
 
     app_handle.db(|db| {
-        match database::fetch_general_scenario_stats(db) {
+        match database::fetch_scenario_data(db) {
             Ok(fetched_data) => data = fetched_data,
-            Err(err) => eprintln!("[Main]::fetch general stats Error : {}", err),
-        };
-    });
-
-    data
-}
-
-#[tauri::command]
-fn fetch_chart_scenario_stats(app_handle: AppHandle) -> Vec<ScenarioChartStats> {
-    let mut data: Vec<ScenarioChartStats> = Vec::new();
-
-    app_handle.db(|db| {
-        match database::fetch_chart_scenario_stats(db) {
-            Ok(fetched_data) => data = fetched_data,
-            Err(err) => eprintln!("[Main]::fetch chart scenario Error : {}", err),
+            Err(err) => eprintln!("[Main]::fetch scenario data Error : {}", err),
         };
     });
 
@@ -292,12 +276,11 @@ fn main() {
             fetch_scenarios,
             fetch_scenarios_games,
             fetch_settings,
-            fetch_chart_scenario_stats,
-            fetch_general_scenario_stats,
             insert_playlist,
             fetch_playlist_with_data,
             update_playlist_state,
-            fetch_active_playlist_with_data
+            fetch_active_playlist_with_data,
+            fetch_scenario_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

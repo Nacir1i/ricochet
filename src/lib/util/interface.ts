@@ -54,49 +54,9 @@ export interface Data {
   stats: string;
 }
 
-export interface Scenario {
-  id: number;
-  name: string;
-  difficulty: string;
-  created_at: string;
-  games_count: number;
-}
-
 export interface Settings {
   id: number;
   directory_path?: string;
-}
-
-export interface GenericStats {
-  name: string;
-  games_count: number;
-  shots?: number;
-  hits?: number;
-  accuracy?: number;
-  damage_done?: number;
-  damage_possible?: number;
-  score?: number;
-}
-
-export interface DataChart {
-  date: string;
-  avg_accuracy?: number;
-}
-
-export interface ChartStats {
-  name: string;
-  data: DataChart[];
-}
-
-export interface FormattedChart {
-  name: string;
-  accuracyArray: number[];
-  dateArray: string[];
-}
-
-export interface Stat {
-  generic: GenericStats;
-  chart: FormattedChart;
 }
 
 export enum Difficulty {
@@ -122,4 +82,26 @@ export interface GroupedPlaylist {
     reps: number;
     days: { games_count: number }[];
   }[];
+}
+
+export interface ChartDataSets {
+  accuracy: { avg_accuracy: number; date: string }[];
+  score: { avg_score: number; date: string }[];
+}
+
+export interface ScenarioData {
+  id: number;
+  name: string;
+  games_count: number;
+  shots?: number;
+  hits?: number;
+  accuracy?: number;
+  damage_done?: number;
+  damage_possible?: number;
+  score?: number;
+  MaxScore?: number;
+  MinScore?: number;
+  day_data: ChartDataSets;
+  month_data: ChartDataSets;
+  year_data: ChartDataSets;
 }

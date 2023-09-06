@@ -38,6 +38,43 @@ pub struct DailyScenarioData {
     pub avg_accuracy: Option<f64>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ScoreDataSet {
+    pub date: String,
+    pub avg_score: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AccuracyDataSet {
+    pub date: String,
+    pub avg_accuracy: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CharDataSets {
+    pub accuracy: Vec<AccuracyDataSet>,
+    pub score: Vec<ScoreDataSet>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ScenarioData {
+    pub id: i64,
+    pub name: String,
+    pub games_count: u32,
+    pub shots: Option<f32>,
+    pub hits: Option<f32>,
+    pub accuracy: Option<f32>,
+    pub damage_done: Option<f32>,
+    pub damage_possible: Option<f32>,
+    pub score: Option<f32>,
+    pub max_score: String,
+    pub min_score: String,
+    pub difficulty: String,
+    pub day_data: CharDataSets,
+    pub month_data: CharDataSets,
+    pub year_data: CharDataSets,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ScenarioChartStats {
     pub name: String,
@@ -622,10 +659,7 @@ pub fn fetch_game_page(page: u8, limit: u8, db: &Connection) -> Result<Vec<Data>
     Ok(vec)
 }
 
-pub fn fetch_gamed_with_scenario_id(
-    game_id: u64,
-    db: &Connection,
-) -> Result<Vec<Data>, rusqlite::Error> {
+pub fn fetch_gamed_with_id(game_id: u64, db: &Connection) -> Result<Vec<Data>, rusqlite::Error> {
     let mut vec: Vec<Data> = Vec::new();
 
     let query = "SELECT * FROM game WHERE id = ?";
@@ -697,7 +731,7 @@ pub fn fetch_scenarios_games(
 
     match result {
         Ok(scenario) => {
-            let games = fetch_gamed_with_scenario_id(scenario.id, db)?;
+            let games = fetch_gamed_with_id(scenario.id, db)?;
 
             Ok(games)
         }
@@ -705,32 +739,26 @@ pub fn fetch_scenarios_games(
     }
 }
 
-pub fn fetch_general_scenario_stats(
-    db: &Connection,
-) -> Result<Vec<ScenarioGeneralStats>, rusqlite::Error> {
-    let mut vec: Vec<ScenarioGeneralStats> = Vec::new();
+pub fn fetch_scenario_data(db: &Connection) -> Result<Vec<ScenarioData>, rusqlite::Error> {
+    let mut vec: Vec<ScenarioData> = Vec::new();
 
     let query = "
-        SELECT s.name,
-            COUNT(g.id) AS game_count,
+        SELECT 
+            s.id,
+            s.name,
+            s.difficulty,
+            COUNT(DISTINCT g.id) AS game_count,
             AVG(st.shots) AS avg_shots,
             AVG(st.hits) AS avg_hits,
             AVG(st.hits) / AVG(st.shots) * 100 AS accuracy,
             AVG(st.damage_done) AS avg_damage_done,
             AVG(st.damage_possible) AS avg_damage_possible,
             AVG(kv.value),
-            s.difficulty
+            MAX(kv.value),
+            MIN(kv.value) 
         FROM scenario s 
         LEFT JOIN game g ON s.id = g.scenario_id 
-        LEFT JOIN (
-                SELECT game_id,
-                    AVG(shots) AS shots,
-                    AVG(hits) AS hits,
-                    AVG(damage_done) AS damage_done,
-                    AVG(damage_possible) AS damage_possible
-                FROM stats
-                GROUP BY game_id
-            ) st ON g.id = st.game_id 
+        LEFT JOIN stats st ON g.id = st.game_id 
         LEFT JOIN key_value kv ON kv.game_id = g.id and kv.key = 'Score:' 
         GROUP BY s.id;
     ";
@@ -738,67 +766,131 @@ pub fn fetch_general_scenario_stats(
     let mut rows = statement.query([])?;
 
     while let Some(row) = rows.next()? {
-        let scenario = ScenarioGeneralStats {
-            name: row.get(0)?,
-            games_count: row.get(1)?,
-            shots: row.get(2)?,
-            hits: row.get(3)?,
-            accuracy: row.get(4)?,
-            damage_done: row.get(5)?,
-            damage_possible: row.get(6)?,
-            score: row.get(7)?,
-            difficulty: row.get(8)?,
+        let mut scenario = ScenarioData {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            difficulty: row.get(2)?,
+            games_count: row.get(3)?,
+            shots: row.get(4)?,
+            hits: row.get(5)?,
+            accuracy: row.get(6)?,
+            damage_done: row.get(7)?,
+            damage_possible: row.get(8)?,
+            score: row.get(9)?,
+            max_score: row.get(10)?,
+            min_score: row.get(11)?,
+            day_data: CharDataSets {
+                accuracy: Vec::new(),
+                score: Vec::new(),
+            },
+            month_data: CharDataSets {
+                accuracy: Vec::new(),
+                score: Vec::new(),
+            },
+            year_data: CharDataSets {
+                accuracy: Vec::new(),
+                score: Vec::new(),
+            },
         };
 
-        vec.push(scenario)
-    }
+        let query = "
+            SELECT 
+                scenario_name,
+                json_object(
+                    'accuracy', json_group_array(json_object('date', date_day, 'avg_accuracy', avg_accuracy)),
+                    'score', json_group_array(json_object('date', date_day, 'avg_score', avg_score))
+                ) daily_data
+            FROM (                                         
+                SELECT                             
+                    scenario.name AS scenario_name,
+                    strftime('%Y-%m-%d', game.created_at) AS date_day,
+                    AVG(CAST(key_value.value AS REAL)) AS avg_score,
+                    AVG(stats.hits) / AVG(stats.shots) * 100 AS avg_accuracy
+                FROM
+                    scenario
+                LEFT JOIN game ON scenario.id = game.scenario_id
+                LEFT JOIN stats ON game.id = stats.game_id
+                LEFT JOIN key_value ON game.id = key_value.game_id AND key_value.key = 'Score:' 
+                WHERE scenario.id = ? 
+                GROUP BY
+                    scenario_name, date_day
+            ) subquery
+            GROUP BY
+                scenario_name;
+        ";
+        let daily_data_string: String =
+            db.query_row(query, [scenario.id], |row| Ok(row.get(1)?))?;
 
-    Ok(vec)
-}
+        match serde_json::from_str::<CharDataSets>(&daily_data_string) {
+            Ok(data) => scenario.day_data = data,
+            Err(err) => println!("{:?}", err),
+        };
 
-pub fn fetch_chart_scenario_stats(
-    db: &Connection,
-) -> Result<Vec<ScenarioChartStats>, rusqlite::Error> {
-    let mut vec: Vec<ScenarioChartStats> = Vec::new();
+        let query = "
+            SELECT 
+                scenario_name,
+                json_object(
+                    'accuracy', json_group_array(json_object('date', date_month, 'avg_accuracy', avg_accuracy)),
+                    'score', json_group_array(json_object('date', date_month, 'avg_score', avg_score))
+                ) daily_data
+            FROM (                                         
+                SELECT                             
+                    scenario.name AS scenario_name,
+                    strftime('%Y-%m', game.created_at) AS date_month,
+                    AVG(CAST(key_value.value AS REAL)) AS avg_score,
+                    AVG(stats.hits) / AVG(stats.shots) * 100 AS avg_accuracy
+                FROM
+                    scenario
+                LEFT JOIN game ON scenario.id = game.scenario_id
+                LEFT JOIN stats ON game.id = stats.game_id
+                LEFT JOIN key_value ON game.id = key_value.game_id AND key_value.key = 'Score:' 
+                WHERE scenario.id = ? 
+                GROUP BY
+                    scenario_name, date_month
+            ) subquery
+            GROUP BY
+                scenario_name;
+        ";
+        let monthly_data_string: String =
+            db.query_row(query, [scenario.id], |row| Ok(row.get(1)?))?;
+        match serde_json::from_str::<CharDataSets>(&monthly_data_string) {
+            Ok(data) => scenario.month_data = data,
+            Err(err) => println!("{:?}", err),
+        };
 
-    let query = "
-        SELECT s.name,
-            DATE(g.created_at),
-            AVG(st.hits) / AVG(st.shots) * 100 AS accuracy 
-        FROM scenario s 
-        LEFT JOIN game g 
-        ON s.id = g.scenario_id 
-        LEFT JOIN stats st 
-        ON g.id = st.game_id 
-        GROUP BY s.id, 
-            DATE(g.created_at);";
-    let mut statement = db.prepare(query)?;
-    let rows = statement.query_map([], |row| {
-        Ok((
-            row.get::<_, String>(0)?,
-            row.get::<_, String>(1)?,
-            row.get::<_, Option<f64>>(2)?,
-        ))
-    })?;
+        let query = "
+            SELECT 
+                scenario_name,
+                json_object(
+                    'accuracy', json_group_array(json_object('date', date_year, 'avg_accuracy', avg_accuracy)),
+                    'score', json_group_array(json_object('date', date_year, 'avg_score', avg_score))
+                ) daily_data
+            FROM (                                         
+                SELECT                             
+                    scenario.name AS scenario_name,
+                    strftime('%Y', game.created_at) AS date_year,
+                    AVG(CAST(key_value.value AS REAL)) AS avg_score,
+                    AVG(stats.hits) / AVG(stats.shots) * 100 AS avg_accuracy
+                FROM
+                    scenario
+                LEFT JOIN game ON scenario.id = game.scenario_id
+                LEFT JOIN stats ON game.id = stats.game_id
+                LEFT JOIN key_value ON game.id = key_value.game_id AND key_value.key = 'Score:' 
+                WHERE scenario.id = ? 
+                GROUP BY
+                    scenario_name, date_year
+            ) subquery
+            GROUP BY
+                scenario_name;
+        ";
+        let yearly_data_string: String =
+            db.query_row(query, [scenario.id], |row| Ok(row.get(1)?))?;
+        match serde_json::from_str::<CharDataSets>(&yearly_data_string) {
+            Ok(data) => scenario.year_data = data,
+            Err(err) => println!("{:?}", err),
+        };
 
-    for result in rows {
-        let (name, date, avg_accuracy) = result?;
-        let daily_data = DailyScenarioData { date, avg_accuracy };
-
-        let existing_index = vec.iter().position(|stats| stats.name == name);
-
-        match existing_index {
-            Some(index) => {
-                vec[index].data.push(daily_data);
-            }
-            None => {
-                let new_stats = ScenarioChartStats {
-                    name: name.clone(),
-                    data: vec![daily_data],
-                };
-                vec.push(new_stats);
-            }
-        }
+        vec.push(scenario);
     }
 
     Ok(vec)
