@@ -1,17 +1,11 @@
 <script lang="ts">
-  import { dashboardHistory } from "$lib";
-  import {
-    Table,
-    TableBody,
-    TableBodyCell,
-    TableBodyRow,
-    TableHead,
-    TableHeadCell,
-  } from "flowbite-svelte";
+  import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api";
   import type { GroupedPlaylist, ScenarioData } from "$lib/util";
   import Loader from "$lib/Loader.svelte";
-  import GenericStatsComp from "$lib/Scenario.svelte";
+  import SmallPrimaryContainer from "$lib/SmallPrimaryContainer.svelte";
+  import ScenarioChart from "$lib/ScenarioChart.svelte";
+  import ProgressBar from "@okrad/svelte-progressbar";
 
   async function fetchActivePlaylist() {
     const data = await invoke<GroupedPlaylist[]>(
@@ -35,7 +29,6 @@
 
   async function fetch_scenarios(): Promise<ScenarioData[]> {
     const data = await invoke<ScenarioData[]>("fetch_scenario_data");
-    console.log(data);
 
     return data;
   }
@@ -47,106 +40,66 @@
   // document.addEventListener("contextmenu", (event) => event.preventDefault());
 </script>
 
-<div class="w-full h-full p-10 pt-2 flex overflow-y-scroll no-scrollbar gap-16">
-  <div
-    class="h-full w-full rounded-md flex flex-col overflow-y-scroll no-scrollbar"
-  >
-    <h1
-      class="mb-3 text-xl font-semibold text-gray-900 dark:text-white text-left"
-    >
-      Top played scenarios
-    </h1>
-    {#await scenarios}
-      <Loader />
-    {:then scenarios}
-      <div class="h-full w-full flex flex-col gap-11">
-        {#each scenarios as scenario}
-          <GenericStatsComp {scenario} />
-        {/each}
-      </div>
-    {:catch}
-      <p>Oops</p>
-    {/await}
-  </div>
-  <div class="h-full w-full grid grid-cols-1 grid-rows-[55%_45%]">
-    <div class="relative rounded-md overflow-y-scroll">
-      <h1
-        class="mb-2 text-xl font-semibold text-gray-900 dark:text-white text-left"
-      >
-        Current active playlist
-      </h1>
-      {#await activePlaylist}
+<div class="w-full h-full flex flex-col gap-6">
+  <div class="w-full h-[60%] bg-green-300">
+    <SmallPrimaryContainer>
+      <!-- {#await scenarios}
         <Loader />
-      {:then data}
-        {#if data.data.length >= 1}
-          <div class="w-full h-full flex flex-col gap-3 text-sm">
-            <span class="flex gap-2 items-center justify-start">
-              <p class="text-black dark:text-white">
-                {data.data[0].name} :
-              </p>
-              <p>{(data.playedGames / data.gamesToPlay) * 100}% completed</p>
-            </span>
-            <span class="flex flex-wrap gap-1 text-gray-400">
-              <p>{data.data[0].description},</p>
-              <p>to be played for</p>
-              <p class=" font-semibold text-base text-black dark:text-white">
-                {data.data[0].duration}
-              </p>
-              <p>days.</p>
-              <p>This playlist includes:</p>
-            </span>
-            <ul class="flex flex-col gap-2">
-              {#each data.data[0].scenarios as scenarios}
-                <li class="flex gap-1">
-                  <p>{scenarios.scenario_name}</p>
-                  <span class="flex gap-1 text-gray-400">
-                    <p>for</p>
-                    <p
-                      class=" font-semibold text-base text-black dark:text-white"
-                    >
-                      {scenarios.reps}
-                    </p>
-                    <p>reps</p>
-                  </span>
-                </li>
-              {/each}
-            </ul>
-          </div>
-        {:else}
-          <p
-            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl text-gray-600 -rotate-45"
-          >
-            No active playlist
-          </p>
-        {/if}
-      {/await}
-    </div>
-    <div class="w-full rounded-md flex flex-col">
-      <caption
-        class="rounded-t-lg p-2 text-xl font-semibold text-gray-900 dark:text-white text-left"
-      >
-        <p>Last 5 played games</p>
-      </caption>
-      <Table class="p-0">
-        <TableHead class="rounded-lg">
-          <TableHeadCell>NAME</TableHeadCell>
-          <TableHeadCell>SCORE</TableHeadCell>
-          <TableHeadCell>ACCURACY</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#each $dashboardHistory as game}
-            <TableBodyRow>
-              <TableBodyCell>{game.key_value[3].value}</TableBodyCell>
-              <TableBodyCell>{game.key_value[2].value}</TableBodyCell>
-              <TableBodyCell
-                >{Math.floor(
-                  (game.stats.hits / game.stats.shots) * 100
-                )}%</TableBodyCell
-              >
-            </TableBodyRow>
+      {:then scenarios}
+        <div
+          class="w-ful h-full flex justify-start items-center gap-7 overflow-y-scroll scrollbar-thin scrollbar-thumb-third"
+        >
+          {#each scenarios as scenario}
+            <ScenarioChart {scenario} />
           {/each}
-        </TableBody>
-      </Table>
+        </div>
+      {/await} -->
+    </SmallPrimaryContainer>
+  </div>
+  <div class="w-full flex-1 z-50 flex justify-between items-center gap-6">
+    <div
+      class="p-5 z-50 w-[50%] max-w-[50%] h-full max-h-full bg-primary border-accent border-4 relative"
+    >
+      <!-- {#await activePlaylist}
+        <Loader />
+      {:then activePlaylist}
+        <div class="flex flex-col overflow-y-scroll max-h-[150px]">
+          <div class="flex gap-3 items-center">
+            <p class="text-white text-xl">{activePlaylist.data[0].name}</p>
+            <ProgressBar
+              labelColor="white"
+              thickness={6}
+              series={{
+                perc:
+                  (activePlaylist.playedGames / activePlaylist.gamesToPlay) *
+                    100 <=
+                  100
+                    ? (activePlaylist.playedGames /
+                        activePlaylist.gamesToPlay) *
+                      100
+                    : 100,
+                color: "#2196f3",
+              }}
+              width={60}
+              style="radial"
+              textSize={90}
+            />
+          </div>
+          <ul>
+            {#each activePlaylist.data[0].scenarios as scenario}
+              <li>{scenario.scenario_name}</li>
+            {/each}
+          </ul>
+        </div>
+      {/await} -->
+      <div
+        class="bg-secondary border-accent border-t-4 absolute -bottom-14 -left-[3.6rem] h-14 w-[3.6rem] transform translate-x-1/2 -translate-y-1/2 rotate-45"
+      />
+    </div>
+    <div class="z-40 w-[50%] h-full bg-primary border-accent border-4 relative">
+      <div
+        class="bg-secondary border-accent border-t-4 absolute -bottom-14 -left-[3.7rem] h-14 w-[3.6rem] transform translate-x-1/2 -translate-y-1/2 rotate-45"
+      />
     </div>
   </div>
 </div>

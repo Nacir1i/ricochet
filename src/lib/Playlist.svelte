@@ -2,90 +2,38 @@
   import { invoke } from "@tauri-apps/api";
   import { type GroupedPlaylist, PlaylistState } from "$lib/util";
   import { Button } from "flowbite-svelte";
-  import { ChevronDown, ChevronUp } from "lucide-svelte";
+  import PlaylistScenario from "./PlaylistScenario.svelte";
 
   export let playlist: GroupedPlaylist;
-
-  let toggle = false;
 </script>
 
-<div
-  data-te-perfect-scrollbar-init
-  class={toggle
-    ? "w-full row-span-2 dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"
-    : "w-full dark:bg-gray-700 bg-gray-200 p-3 dark:text-white rounded-lg"}
->
-  <div class="flex items-center justify-between mb-2">
-    <div class="flex flex-col gap-2">
-      <span class="flex items-center gap-2 mb-1">
-        <p class="text-lg">Name:</p>
-        <p>{playlist.name}</p>
-        <Button
-          class="py-[2px] px-2 rounded-sm text-xs"
-          color={playlist.state === PlaylistState.ACTIVE ? "green" : "red"}
-          on:click={() =>
-            invoke("update_playlist_state", {
-              playlistId: playlist.id,
-              state:
-                playlist.state === PlaylistState.ACTIVE
-                  ? PlaylistState.INACTIVE
-                  : PlaylistState.ACTIVE,
-            })}>{playlist.state}</Button
-        >
-      </span>
-      <span class="flex items-center gap-2">
-        <p class="text-lg">Description:</p>
-        <p>{playlist.description}</p>
-      </span>
-      <span class="flex items-center gap-2">
-        <p class="text-lg">Duration:</p>
-        <p>{playlist.duration}</p>
-      </span>
-    </div>
-
-    <button
-      on:click={() => {
-        toggle = !toggle;
-      }}
-    >
-      {#if toggle}
-        <ChevronUp class="cursor-pointer" />
-      {:else}
-        <ChevronDown class="cursor-pointer" />
-      {/if}
-    </button>
+<div class="w-full p-3">
+  <div class="flex flex-col gap-2 justify-between mb-2">
+    <span class="flex items-center gap-2 mb-1">
+      <p class="text-3xl">{playlist.name}</p>
+      <p class="text-gray-600 text-sm">({playlist.duration} Days)</p>
+      <Button
+        class="py-[2px] px-2 rounded-sm text-xs"
+        color={playlist.state === PlaylistState.ACTIVE ? "green" : "red"}
+        on:click={() =>
+          invoke("update_playlist_state", {
+            playlistId: playlist.id,
+            state:
+              playlist.state === PlaylistState.ACTIVE
+                ? PlaylistState.INACTIVE
+                : PlaylistState.ACTIVE,
+          })}>{playlist.state}</Button
+      >
+    </span>
+    <p class="text-gray-700 text-sm">{playlist.description}</p>
   </div>
-  {#if toggle}
-    <div
-      class="border-t-[1px] max-h-[150px] dark:border-gray-300 border-gray-400 pt-2 flex flex-col gap-5 overflow-y-scroll"
-    >
+  <div
+    class="border-t-black border-t-[1px] pt-2 flex flex-col gap-5 overflow-y-scroll"
+  >
+    <div class=" space-y-3">
       {#each playlist.scenarios as scenario}
-        <div>
-          <span class="flex items-center gap-2">
-            <p>Scenario name :</p>
-            <p>{scenario.scenario_name}</p>
-          </span>
-          <span class="flex items-center gap-2">
-            <p>Scenario difficulty :</p>
-            <p>{scenario.scenario_difficulty}</p>
-          </span>
-          <span class="flex items-center gap-2">
-            <p>Repititions :</p>
-            <p>{scenario.reps}</p>
-          </span>
-          <span>
-            <p>Games played per day :</p>
-            <ul class="ml-3 pl-5">
-              {#each scenario.days as day, index}
-                <span class="flex items-center gap-2">
-                  <p>Day {index + 1}:</p>
-                  <p>{day.games_count}</p>
-                </span>
-              {/each}
-            </ul>
-          </span>
-        </div>
+        <PlaylistScenario {scenario} />
       {/each}
     </div>
-  {/if}
+  </div>
 </div>

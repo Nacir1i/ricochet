@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@okrad/svelte-progressbar':
+    specifier: ^2.2.0
+    version: 2.2.0(svelte@4.0.5)
   '@popperjs/core':
     specifier: ^2.11.8
     version: 2.11.8
@@ -26,9 +29,6 @@ dependencies:
   lucide-svelte:
     specifier: ^0.268.0
     version: 0.268.0(svelte@4.0.5)
-  svelte-frappe-charts:
-    specifier: ^1.10.0
-    version: 1.10.0(svelte@4.0.5)
   tailwind-merge:
     specifier: ^1.13.2
     version: 1.13.2
@@ -61,6 +61,9 @@ devDependencies:
   svelte-check:
     specifier: ^3.4.3
     version: 3.4.6(postcss-load-config@4.0.1)(postcss@8.4.25)(svelte@4.0.5)
+  tailwind-scrollbar:
+    specifier: ^3.0.5
+    version: 3.0.5(tailwindcss@3.3.2)
   tailwindcss:
     specifier: ^3.3.2
     version: 3.3.2
@@ -338,6 +341,14 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
     dev: true
+
+  /@okrad/svelte-progressbar@2.2.0(svelte@4.0.5):
+    resolution: {integrity: sha512-JB5XECrj0dEYJNnAH07XkIL5xObr9SIf0ora+wlNV9c2xwPQwlCCIWNnF8ZxH/V81QYa132c57piR0JWQRhZ3g==}
+    peerDependencies:
+      svelte: ^4.0.4
+    dependencies:
+      svelte: 4.0.5
+    dev: false
 
   /@polka/url@1.0.0-next.21:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
@@ -1396,15 +1407,6 @@ packages:
       - sugarss
     dev: true
 
-  /svelte-frappe-charts@1.10.0(svelte@4.0.5):
-    resolution: {integrity: sha512-TkkcovOAeoieiDFFJS7p56E91WcS5qFq5lpkF+yuCBMG17HaC+7PrkT/0zzii0BBnYlOuumsfb9S5UmsDZRhdg==}
-    peerDependencies:
-      svelte: ^3.0.0
-    dependencies:
-      frappe-charts: 1.6.2
-      svelte: 4.0.5
-    dev: false
-
   /svelte-hmr@0.15.2(svelte@4.0.5):
     resolution: {integrity: sha512-q/bAruCvFLwvNbeE1x3n37TYFb3mTBJ6TrCq6p2CoFbSTNhDE9oAtEfpy+wmc9So8AG0Tja+X0/mJzX9tSfvIg==}
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
@@ -1484,6 +1486,15 @@ packages:
   /tailwind-merge@1.13.2:
     resolution: {integrity: sha512-R2/nULkdg1VR/EL4RXg4dEohdoxNUJGLMnWIQnPKL+O9Twu7Cn3Rxi4dlXkDzZrEGtR+G+psSXFouWlpTyLhCQ==}
     dev: false
+
+  /tailwind-scrollbar@3.0.5(tailwindcss@3.3.2):
+    resolution: {integrity: sha512-0ZwxTivevqq9BY9fRP9zDjHl7Tu+J5giBGbln+0O1R/7nHtBUKnjQcA1aTIhK7Oyjp6Uc/Dj6/dn8Dq58k5Uww==}
+    engines: {node: '>=12.13.0'}
+    peerDependencies:
+      tailwindcss: 3.x
+    dependencies:
+      tailwindcss: 3.3.2
+    dev: true
 
   /tailwindcss@3.3.2:
     resolution: {integrity: sha512-9jPkMiIBXvPc2KywkraqsUfbfj+dHDb+JPWtSJa9MLFdrPyazI7q6WX2sUrm7R9eVR7qqv3Pas7EvQFzxKnI6w==}

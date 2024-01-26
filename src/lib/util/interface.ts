@@ -70,18 +70,20 @@ export enum PlaylistState {
   INACTIVE = "INACTIVE",
 }
 
+export interface PlaylistScenario {
+  scenario_name: string;
+  scenario_difficulty: Difficulty;
+  reps: number;
+  days: { games_count: number }[];
+}
+
 export interface GroupedPlaylist {
   id: number;
   name: string;
   description: string;
   duration: number;
   state: PlaylistState;
-  scenarios: {
-    scenario_name: string;
-    scenario_difficulty: Difficulty;
-    reps: number;
-    days: { games_count: number }[];
-  }[];
+  scenarios: PlaylistScenario[];
 }
 
 export interface ChartDataSets {
@@ -93,15 +95,22 @@ export interface ScenarioData {
   id: number;
   name: string;
   games_count: number;
-  shots?: number;
-  hits?: number;
-  accuracy?: number;
-  damage_done?: number;
-  damage_possible?: number;
-  score?: number;
-  MaxScore?: number;
-  MinScore?: number;
+  shots: number;
+  hits: number;
+  accuracy: number;
+  damage_done: number;
+  damage_possible: number;
+  score: number;
+  max_score: number;
+  min_score: number;
   day_data: ChartDataSets;
   month_data: ChartDataSets;
   year_data: ChartDataSets;
 }
+
+export const SCENARIO_SORTING = {
+  day: "day",
+  month: "month",
+  year: "year",
+} as const;
+export type ScenarioSorting = keyof typeof SCENARIO_SORTING;

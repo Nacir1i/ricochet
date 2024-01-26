@@ -1,7 +1,7 @@
 <script lang="ts">
   import logo from "$lib/asset/app-icon.png";
   import { page } from "$app/stores";
-  import { Bell, ChevronDown, Search, Settings } from "lucide-svelte";
+  import { Bell, ChevronDown, Settings } from "lucide-svelte";
   import { Dropdown, DropdownItem } from "flowbite-svelte";
 
   $: activeUrl = $page.url.pathname;

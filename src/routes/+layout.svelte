@@ -2,18 +2,12 @@
   import "../app.postcss";
   import { invoke } from "@tauri-apps/api/tauri";
   import { listen } from "@tauri-apps/api/event";
-  import type { Payload, Game, Scenario, MessagePayload } from "$lib/util";
-  import {
-    setDashboardHistory,
-    set_history,
-    set_scenarios,
-    updateDashboardHistory,
-    update_history,
-  } from "$lib";
+  import type { Payload, Game, MessagePayload } from "$lib/util";
+  import { set_history, updateDashboardHistory, update_history } from "$lib";
   import Titlebar from "$lib/Titlebar.svelte";
   import { notifications } from "$lib/notification";
   import Toast from "$lib/Toast.svelte";
-  import Navbar from "$lib/Navbar.svelte";
+  import SideBar from "$lib/SideBar.svelte";
 
   async function newRunListener() {
     await listen("new_run", (event) => {
@@ -54,23 +48,11 @@
     try {
       const data = await invoke<Game[]>("fetch_game_page", {
         page: 1,
-        limit: 20,
+        limit: 50,
       });
 
       if (data) {
         set_history(data);
-        setDashboardHistory(data.slice(0, 5));
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  async function fetchScenarios() {
-    try {
-      const data: Scenario[] = await invoke("fetch_scenarios");
-
-      if (data) {
-        set_scenarios(data);
       }
     } catch (error) {
       console.error(error);
@@ -82,14 +64,15 @@
   infoListener();
   warningListener();
   fetch_data();
-  fetchScenarios();
 </script>
 
 <body
-  class="pt-7 dark:bg-gray-900 light:bg-gray-200 w-screen h-screen flex flex-col cursor-default dark:text-white"
+  class="bg-secondary w-screen h-screen grid grid-cols-40 grid-rows-40 cursor-default overflow-hidden"
 >
   <Titlebar />
-  <Navbar />
-  <slot />
+  <SideBar />
+  <div class="col-start-6 col-end-40 row-start-5 row-end-40 z-40">
+    <slot />
+  </div>
   <Toast />
 </body>

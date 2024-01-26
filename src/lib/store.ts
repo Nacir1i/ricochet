@@ -1,11 +1,11 @@
 import { writable, type Writable } from "svelte/store";
 import { invoke } from "@tauri-apps/api";
 
-import type { Game, Scenario } from "./util";
+import type { Game, ScenarioData } from "./util";
 
 export const history: Writable<[] | Game[]> = writable([]);
 export const dashboardHistory: Writable<[] | Game[]> = writable([]);
-export const scenarios: Writable<[] | Scenario[]> = writable([]);
+export const scenarios: Writable<[] | ScenarioData[]> = writable([]);
 
 export function set_history(games: Game[]) {
   history.set(games);
@@ -36,6 +36,6 @@ export function updateDashboardHistory(game: Game) {
   });
 }
 
-export function set_scenarios(data: Scenario[]) {
+export function set_scenarios(data: ScenarioData[]) {
   scenarios.set(data);
 }
